@@ -1,48 +1,22 @@
 class Move
-  VALUES = ['rock', 'paper', 'scissors']
+  RULES_OF_RPS = {
+    "rock": %w[scissors lizard],
+    "paper": %w[rock spock],
+    "scissors": %w[paper lizard],
+    "spock": %w[scissors rock],
+    "lizard": %w[spock paper]
+  }
 
   def initialize(value)
     @value = value
   end
 
-  def scissors?
-    @value == "scissors"
-  end
-
-  def rock?
-    @value == "rock"
-  end
-
-  def paper?
-    @value == "paper"
-  end
-
-  def >(other_move)
-    if rock?
-      return true if other_move.scissors?
-    elsif paper?
-      return true if other_move.rock?
-    elsif scissors?
-      return true if other_move.paper?
-    end
-
-    return false
-  end
-
   def to_s
-    @value
+    @value.to_s
   end
 
-  def <(other_move)
-    if rock?
-      return true if other_move.paper? # Rock loses to Paper
-    elsif paper?
-      return true if other_move.scissors? # Paper loses to Scissors
-    elsif scissors?
-      return true if other_move.rock? # Scissors lose to Rock
-    end
-
-    return false
+  def to_sym
+    @value
   end
 end
 
@@ -70,9 +44,9 @@ class Human < Player
   def choose
     choice = nil
     loop do
-      puts "Please choose rock, paper, or scissors:"
-      choice = gets.chomp
-      break if Move::VALUES.include? choice
+      puts "Please choose rock, paper, scissors, lizard, or spock:"
+      choice = gets.chomp.downcase.to_sym
+      break if Move::RULES_OF_RPS.keys.include? choice
       puts "Sorry, invalid choice."
     end
     self.move = Move.new(choice)
@@ -85,7 +59,7 @@ class Computer < Player
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    self.move = Move.new(Move::RULES_OF_RPS.keys.sample)
   end
 end
 
@@ -116,13 +90,14 @@ class RPSGame
     end
   end
 
-  def determine_winner
-    if human.move > computer.move
-      return "#{human.name}"
-    elsif human.move < computer.move
-      return "#{computer.name}"
-    else
+  def determine_winner(humans_choice, computers_choice)
+    losing_moves = Move::RULES_OF_RPS[humans_choice.to_sym]
+    if humans_choice == computers_choice
       return "Nobody"
+    elsif losing_moves.include?(computers_choice)
+      return "#{human.name}"
+    else
+      return "#{computer.name}"
     end
   end
 
@@ -167,9 +142,9 @@ class RPSGame
     display_welcome_message
 
     loop do
-      human.choose
-      computer.choose
-      winner = determine_winner
+      human_choice = human.choose
+      computer_choice = computer.choose
+      winner = determine_winner(human_choice, computer_choice)
       update_score(winner)
       display_winner(winner)
       break if computer.score == 10 || human.score == 10
