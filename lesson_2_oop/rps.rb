@@ -36,22 +36,22 @@ class Move
   def <(other_move)
     if rock?
       return true if other_move.paper? # Rock loses to Paper
-      false
     elsif paper?
       return true if other_move.scissors? # Paper loses to Scissors
-      false
     elsif scissors?
       return true if other_move.rock? # Scissors lose to Rock
-      false
     end
+
+    return false
   end
 end
 
 class Player
-  attr_accessor :move, :name
+  attr_accessor :move, :name, :score
 
   def initialize
     set_name
+    @score = 0
   end
 end
 
@@ -99,24 +99,55 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to Rock, paper, Scissors!"
+    puts "Welcome to RPS (Rock, Paper, Scissors) #{human.name}!"
+    sleep(0.5)
+    puts "The game will end when the first player reaches a score of 10."
+    puts "However, you can quit the game before that."
+    puts "\n"
+    sleep(0.5)
   end
 
   def display_goodbye_message
-    puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
+    if human.score == 10 || computer.score == 10
+      puts "One player has reached a score of 10. The game will close down now."
+      puts "Goodbye!"
+    else
+      puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
+    end
   end
 
-  def display_winner
-    puts "#{human.name} chose #{human.move}."
-    puts "#{computer.name} chose: #{computer.move}."
-
+  def determine_winner
     if human.move > computer.move
-      puts "#{human.name} won!"
+      return "#{human.name}"
     elsif human.move < computer.move
-      puts "#{computer.name} won!"
+      return "#{computer.name}"
     else
-      puts "It's a tie!"
+      return "Nobody"
     end
+  end
+
+  def update_score(winner)
+    if winner == "#{human.name}"
+      human.score += 1
+    elsif winner == "#{computer.name}"
+      computer.score += 1
+    else
+      nil
+    end
+  end
+
+
+  def display_winner(winner)
+    puts "#{human.name} chose #{human.move}."
+    sleep(0.5)
+    puts "#{computer.name} chose: #{computer.move}."
+    sleep(0.5)
+
+    puts "#{winner} won!"
+    puts "------"
+    sleep(0.5)
+    puts "#{human.name} score: #{human.score}"
+    puts "#{computer.name} score: #{computer.score}"
   end
 
   def play_again?
@@ -138,7 +169,10 @@ class RPSGame
     loop do
       human.choose
       computer.choose
-      display_winner
+      winner = determine_winner
+      update_score(winner)
+      display_winner(winner)
+      break if computer.score == 10 || human.score == 10
       break unless play_again?
     end
     display_goodbye_message
