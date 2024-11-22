@@ -60,12 +60,21 @@ class Human < Player
 end
 
 class Computer < Player
+
+  @@personalities = {
+    "R2D2" => ["rock"], #R2D2 always chooses rock.
+    "Hal" => ["scissors", "spock", "lizard"], #Hal will only choose scissors, spock, or lizard.
+    "Chappie" => Move::RULES_OF_RPS.keys #Chappie likes to pick at random each time.
+  }
+
+
   def set_name
-    self.name = ["R2D2", "Hal", "Iris"].sample
+    self.name = ["R2D2", "Hal", "Chappie"].sample
   end
 
-  def choose
-    self.move = Move.new(Move::RULES_OF_RPS.keys.sample)
+  def choose(name)
+    choice = @@personalities[self.name].sample
+    self.move = Move.new(choice)
   end
 end
 
@@ -158,7 +167,7 @@ class RPSGame
 
     loop do
       human_choice = human.choose
-      computer_choice = computer.choose
+      computer_choice = computer.choose(computer.name)
       Player.add_moves_to_players_history(human, human_choice, computer, computer_choice)
       winner = determine_winner(human_choice, computer_choice)
       update_score(winner)
