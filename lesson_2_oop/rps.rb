@@ -21,11 +21,17 @@ class Move
 end
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_accessor :move, :name, :score, :move_history
+
+  def self.add_moves_to_players_history(human_object, human_choice, computer_object, computer_choice)
+    human_object.move_history << human_choice.to_s
+    computer_object.move_history << computer_choice.to_s
+  end
 
   def initialize
     set_name
     @score = 0
+    @move_history = []
   end
 end
 
@@ -125,6 +131,15 @@ class RPSGame
     puts "#{computer.name} score: #{computer.score}"
   end
 
+  def display_move_history(human, computer)
+    # round_number = 1
+    puts "-- MOVES --"
+    (0...human.move_history.size).each do |idx|
+    puts "Round #{idx + 1}"
+    puts "#{human.name}: #{human.move_history[idx]} | #{computer.name}: #{computer.move_history[idx]}"
+    end
+  end
+
   def play_again?
     answer = nil
     loop do
@@ -144,9 +159,11 @@ class RPSGame
     loop do
       human_choice = human.choose
       computer_choice = computer.choose
+      Player.add_moves_to_players_history(human, human_choice, computer, computer_choice)
       winner = determine_winner(human_choice, computer_choice)
       update_score(winner)
       display_winner(winner)
+      display_move_history(human, computer)
       break if computer.score == 10 || human.score == 10
       break unless play_again?
     end
