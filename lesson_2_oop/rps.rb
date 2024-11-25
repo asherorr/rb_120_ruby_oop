@@ -197,6 +197,7 @@ class RPSGame
       play_round
       break if game_over?
       break unless play_again?
+      system("clear")
     end
 
     display_goodbye_message
