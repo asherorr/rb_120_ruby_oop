@@ -104,7 +104,7 @@ class RPSGame
       puts "One player has reached a score of 10. The game will close down now."
       puts "Goodbye!"
     else
-      puts "Thanks for playing Rock, Paper, Scissors, Lizard, and Spock. Good bye!"
+      puts "Thanks for playing Rock, Paper, Scissors, Lizard, and Spock. Bye!"
     end
   end
 
@@ -120,22 +120,32 @@ class RPSGame
   end
 
   def update_score(winner)
-    if winner == "#{human.name}"
+    if winner == human.name
       human.score += 1
-    elsif winner == "#{computer.name}"
+    elsif winner == computer.name
       computer.score += 1
     end
   end
 
   def display_winner(winner)
+    display_moves
+    pause_for_calculation
+    display_results(winner)
+  end
+
+  def display_moves
     puts "#{human.name} chose #{human.move}."
     sleep(0.75)
     puts "#{computer.name} chose: #{computer.move}."
     sleep(0.75)
+  end
 
+  def pause_for_calculation
     puts "\n-- Calculating --"
     sleep(0.75)
+  end
 
+  def display_results(winner)
     puts "\n#{winner} won!"
     sleep(1)
     puts "\n#{human.name} score: #{human.score}"
@@ -145,8 +155,9 @@ class RPSGame
   def display_move_history(human, computer)
     puts "\n-- MOVES --"
     (0...human.move_history.size).each do |idx|
-    puts "Round #{idx + 1}"
-    puts "#{human.name}: #{human.move_history[idx]} | #{computer.name}: #{computer.move_history[idx]}"
+      puts "Round #{idx + 1}"
+      puts "#{human.name}: #{human.move_history[idx]} | " \
+           "#{computer.name}: #{computer.move_history[idx]}"
     end
   end
 
@@ -163,21 +174,30 @@ class RPSGame
     false
   end
 
+  def play_round
+    human_choice = human.choose
+    computer_choice = computer.choose(computer.name)
+    Player.add_moves_to_players_history(human, human_choice, computer,
+                                        computer_choice)
+    winner = determine_winner(human_choice, computer_choice)
+    update_score(winner)
+    display_winner(winner)
+    display_move_history(human, computer)
+  end
+
+  def game_over?
+    computer.score == 10 || human.score == 10
+  end
+
   def play
     display_welcome_message
 
     loop do
-      human_choice = human.choose
-      computer_choice = computer.choose
-      Player.add_moves_to_players_history(human, human_choice, computer, computer_choice)
-      winner = determine_winner(human_choice, computer_choice)
-      update_score(winner)
-      display_winner(winner)
-      display_move_history(human, computer)
-      break if computer.score == 10 || human.score == 10
+      play_round
+      break if game_over?
       break unless play_again?
-      system("clear")
     end
+
     display_goodbye_message
   end
 end
