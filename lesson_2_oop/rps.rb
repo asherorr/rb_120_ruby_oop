@@ -176,7 +176,7 @@ class RPSGame
 
   def play_round
     human_choice = human.choose
-    computer_choice = computer.choose(computer.name)
+    computer_choice = computer.choose
     Player.add_moves_to_players_history(human, human_choice, computer,
                                         computer_choice)
     winner = determine_winner(human_choice, computer_choice)
