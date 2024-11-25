@@ -1,10 +1,10 @@
 class Move
   RULES_OF_RPS = {
-    "rock": %w[scissors lizard],
-    "paper": %w[rock spock],
-    "scissors": %w[paper lizard],
-    "spock": %w[scissors rock],
-    "lizard": %w[spock paper]
+    "rock" => %w[scissors lizard],
+    "paper" => %w[rock spock],
+    "scissors" => %w[paper lizard],
+    "spock" => %w[scissors rock],
+    "lizard" => %w[spock paper]
   }
 
   def initialize(value)
@@ -12,10 +12,6 @@ class Move
   end
 
   def to_s
-    @value.to_s
-  end
-
-  def to_sym
     @value
   end
 end
@@ -51,11 +47,11 @@ class Human < Player
     choice = nil
     loop do
       puts "Please choose rock, paper, scissors, lizard, or spock:"
-      choice = gets.chomp.downcase.to_sym
+      choice = gets.chomp.downcase
       break if Move::RULES_OF_RPS.keys.include? choice
       puts "Sorry, invalid choice."
     end
-    self.move = Move.new(choice)
+    self.move = Move.new(choice).to_s
   end
 end
 
@@ -74,7 +70,7 @@ class Computer < Player
 
   def choose(name)
     choice = @@personalities[self.name].sample
-    self.move = Move.new(choice)
+    self.move = Move.new(choice).to_s
   end
 end
 
@@ -88,12 +84,13 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to RPS (Rock, Paper, Scissors) #{human.name}!"
-    sleep(0.5)
+    puts "Welcome to RPS-LS (Rock, Paper, Scissors, Lizard, and Spock) #{human.name}!"
+    sleep(0.75)
     puts "The game will end when the first player reaches a score of 10."
+    sleep(1)
     puts "However, you can quit the game before that."
     puts "\n"
-    sleep(0.5)
+    sleep(1)
   end
 
   def display_goodbye_message
@@ -106,7 +103,7 @@ class RPSGame
   end
 
   def determine_winner(humans_choice, computers_choice)
-    losing_moves = Move::RULES_OF_RPS[humans_choice.to_sym]
+    losing_moves = Move::RULES_OF_RPS[humans_choice]
     if humans_choice == computers_choice
       return "Nobody"
     elsif losing_moves.include?(computers_choice)
@@ -129,20 +126,21 @@ class RPSGame
 
   def display_winner(winner)
     puts "#{human.name} chose #{human.move}."
-    sleep(0.5)
+    sleep(0.75)
     puts "#{computer.name} chose: #{computer.move}."
-    sleep(0.5)
+    sleep(0.75)
 
-    puts "#{winner} won!"
-    puts "------"
-    sleep(0.5)
-    puts "#{human.name} score: #{human.score}"
-    puts "#{computer.name} score: #{computer.score}"
+    puts "\n-- Calculating --"
+    sleep(0.75)
+
+    puts "\n#{winner} won!"
+    sleep(1)
+    puts "\n#{human.name} score: #{human.score}"
+    puts "#{computer.name}'s score: #{computer.score}"
   end
 
   def display_move_history(human, computer)
-    # round_number = 1
-    puts "-- MOVES --"
+    puts "\n-- MOVES --"
     (0...human.move_history.size).each do |idx|
     puts "Round #{idx + 1}"
     puts "#{human.name}: #{human.move_history[idx]} | #{computer.name}: #{computer.move_history[idx]}"
@@ -152,7 +150,7 @@ class RPSGame
   def play_again?
     answer = nil
     loop do
-      puts "Would #{human.name} like to play again?(y/n)"
+      puts "\nWould #{human.name} like to play again?(y/n)"
       answer = gets.chomp
       break if ['y', 'n'].include? answer.downcase
       puts "Sorry, must be y or n."
