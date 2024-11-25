@@ -42,8 +42,9 @@ class Human < Player
     loop do
       puts "What's your name?"
       n = gets.chomp
-      break unless n.empty?
-      puts "Sorry, must enter a value."
+      break if !n.empty? && /[a-zA-Z']/.match?(n)
+      puts "Sorry, you must enter a valid name."
+      puts "Examples: Leila, De'Andre, Evan"
     end
     self.name = n
   end
