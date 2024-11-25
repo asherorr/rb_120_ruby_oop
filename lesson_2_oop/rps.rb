@@ -1,10 +1,10 @@
 class Move
   RULES_OF_RPS = {
-    "rock" => %w[scissors lizard],
-    "paper" => %w[rock spock],
-    "scissors" => %w[paper lizard],
-    "spock" => %w[scissors rock],
-    "lizard" => %w[spock paper]
+    "rock" => %w(scissors lizard),
+    "paper" => %w(rock spock),
+    "scissors" => %w(paper lizard),
+    "spock" => %w(scissors rock),
+    "lizard" => %w(spock paper)
   }
 
   def initialize(value)
@@ -19,9 +19,14 @@ end
 class Player
   attr_accessor :move, :name, :score, :move_history
 
-  def self.add_moves_to_players_history(human_object, human_choice, computer_object, computer_choice)
-    human_object.move_history << human_choice.to_s
-    computer_object.move_history << computer_choice.to_s
+  def self.add_moves_to_players_history(
+    human,
+    human_choice,
+    computer,
+    computer_choice
+  )
+    human.move_history << human_choice.to_s
+    computer.move_history << computer_choice.to_s
   end
 
   def initialize
@@ -56,20 +61,21 @@ class Human < Player
 end
 
 class Computer < Player
-
   @@personalities = {
-    "R2D2" => ["rock"], #R2D2 always chooses rock.
-    "Hal" => ["scissors", "spock", "lizard"], #Hal will only choose scissors, spock, or lizard.
-    "Chappie" => Move::RULES_OF_RPS.keys #Chappie likes to pick at random each time.
+    "R2D2" => ["rock"],
+    # R2D2 always chooses rock.
+    "Hal" => ["scissors", "spock", "lizard"],
+    # Hal will only choose scissors, spock, or lizard.
+    "Chappie" => Move::RULES_OF_RPS.keys
+    # Chappie likes to pick at random each time.
   }
-
 
   def set_name
     self.name = ["R2D2", "Hal", "Chappie"].sample
   end
 
-  def choose(name)
-    choice = @@personalities[self.name].sample
+  def choose
+    choice = @@personalities[name].sample
     self.move = Move.new(choice).to_s
   end
 end
@@ -84,7 +90,7 @@ class RPSGame
   end
 
   def display_welcome_message
-    puts "Welcome to RPS-LS (Rock, Paper, Scissors, Lizard, and Spock) #{human.name}!"
+    puts "Welcome to Rock, Paper, Scissors, Lizard, and Spock #{human.name}!"
     sleep(0.75)
     puts "The game will end when the first player reaches a score of 10."
     sleep(1)
@@ -98,18 +104,18 @@ class RPSGame
       puts "One player has reached a score of 10. The game will close down now."
       puts "Goodbye!"
     else
-      puts "Thanks for playing Rock, Paper, Scissors. Good bye!"
+      puts "Thanks for playing Rock, Paper, Scissors, Lizard, and Spock. Good bye!"
     end
   end
 
   def determine_winner(humans_choice, computers_choice)
     losing_moves = Move::RULES_OF_RPS[humans_choice]
     if humans_choice == computers_choice
-      return "Nobody"
+      "Nobody"
     elsif losing_moves.include?(computers_choice)
-      return "#{human.name}"
+      human.name
     else
-      return "#{computer.name}"
+      computer.name
     end
   end
 
@@ -118,11 +124,8 @@ class RPSGame
       human.score += 1
     elsif winner == "#{computer.name}"
       computer.score += 1
-    else
-      nil
     end
   end
-
 
   def display_winner(winner)
     puts "#{human.name} chose #{human.move}."
@@ -165,7 +168,7 @@ class RPSGame
 
     loop do
       human_choice = human.choose
-      computer_choice = computer.choose(computer.name)
+      computer_choice = computer.choose
       Player.add_moves_to_players_history(human, human_choice, computer, computer_choice)
       winner = determine_winner(human_choice, computer_choice)
       update_score(winner)
@@ -173,6 +176,7 @@ class RPSGame
       display_move_history(human, computer)
       break if computer.score == 10 || human.score == 10
       break unless play_again?
+      system("clear")
     end
     display_goodbye_message
   end
