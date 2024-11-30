@@ -34,6 +34,10 @@ class Player
     @score = 0
     @move_history = []
   end
+
+  def set_name
+    self.name = ""
+  end
 end
 
 class Human < Player
