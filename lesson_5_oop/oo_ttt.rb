@@ -101,8 +101,8 @@ class TTTGame
     puts "Thanks for playing Tic Tac Toe! Goodbye!"
   end
   
-  def display_board(clear = true)
-    clear_screen if clear
+  def display_board(need_to_clear_screen: true)
+    clear_screen if need_to_clear_screen
     puts "You're a #{human.marker}. Computer is a #{computer.marker}."
     puts ""
     puts "     |     |"
@@ -169,7 +169,7 @@ class TTTGame
     display_welcome_message
 
     loop do
-    display_board(false)
+    display_board(need_to_clear_screen: false)
 
       loop do
         human_moves
