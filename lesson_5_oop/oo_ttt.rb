@@ -44,7 +44,7 @@ class Board
       if count_human_marker(@squares.values_at(*line)) == 3
         return TTTGame::HUMAN_MARKER
       elsif count_computer_marker(@squares.values_at(*line)) == 3
-        return TTTGame::count_computer_marker
+        return TTTGame::COMPUTER_MARKER
       end
     end
     nil
