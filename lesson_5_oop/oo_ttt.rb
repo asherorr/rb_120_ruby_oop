@@ -110,7 +110,28 @@ class TTTGame
   FIRST_TO_MOVE = HUMAN_MARKER
 
   attr_reader :board, :human, :computer
-  
+
+  def play
+    clear_screen
+    display_welcome_message
+
+    loop do
+    display_board
+
+      loop do
+        current_player_moves
+        break if board.someone_won? || board.full?
+        clear_screen_and_display_board if human_turn?
+      end
+      display_result
+      break unless play_again?
+      reset
+    end
+    display_goodbye_message
+  end
+
+  private
+
   def initialize
     @board = Board.new
     @human = Player.new(HUMAN_MARKER)
@@ -203,25 +224,6 @@ class TTTGame
     clear_screen
     puts "Let's play again!"
     puts ""
-  end
-
-  def play
-    clear_screen
-    display_welcome_message
-
-    loop do
-    display_board
-
-      loop do
-        current_player_moves
-        break if board.someone_won? || board.full?
-        clear_screen_and_display_board if human_turn?
-      end
-      display_result
-      break unless play_again?
-      reset
-    end
-    display_goodbye_message
   end
 end
 
