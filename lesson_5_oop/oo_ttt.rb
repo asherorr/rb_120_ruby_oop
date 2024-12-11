@@ -34,6 +34,18 @@ class Board # rubocop:disable Style/Documentation
   # rubocop:enable Metrics/AbcSize
   # rubocop:enable Metrics/MethodLength
 
+  def display_available_squares(delimeter = ", ", word = "or")
+    keys = unmarked_keys.dup # Create a copy to avoid modifying the original array.
+    if keys.size == 1
+      "#{keys[0]}"
+    elsif keys.size < 3
+      "#{keys[0]} #{word} #{keys[1]}"
+    else
+      keys[-1] = "#{word} #{keys[-1]}"
+      keys.join(delimeter)
+    end
+  end
+  
   def unmarked_keys
     @squares.keys.select { |key| @squares[key].unmarked? }
   end
@@ -124,7 +136,7 @@ class TTTGame # rubocop:disable Style/Documentation
   end
 
   def play
-    clear
+    clear_screen
     display_welcome_message
     main_game
     display_goodbye_message
@@ -185,7 +197,7 @@ class TTTGame # rubocop:disable Style/Documentation
   end
 
   def human_moves
-    puts "Choose a square (#{board.unmarked_keys.join(', ')}): "
+    puts "Choose a square: #{board.display_available_squares}"
     square = nil
     loop do
       square = gets.chomp.to_i
@@ -225,6 +237,11 @@ class TTTGame # rubocop:disable Style/Documentation
     end
 
     answer == 'y'
+  end
+
+  def display_play_again_message
+    puts "Let's play again!"
+    puts ""
   end
 
   def clear_screen
