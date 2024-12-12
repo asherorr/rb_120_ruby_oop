@@ -112,10 +112,16 @@ class Square # rubocop:disable Style/Documentation
 end
 
 class Player # rubocop:disable Style/Documentation
+  attr_accessor :score
   attr_reader :marker
 
-  def initialize(marker)
+  def initialize(marker, score=0)
     @marker = marker
+    @score = score
+  end
+
+  def update_score
+    @score += 1
   end
 end
 
@@ -142,15 +148,23 @@ class TTTGame # rubocop:disable Style/Documentation
     display_goodbye_message
   end
 
+  def play_round_of_game
+    display_score
+    display_board
+    player_move
+    display_result
+    sleep(2)
+    reset_board
+  end
+
   def main_game
     loop do
-      display_board
-      player_move
-      display_result
-      break unless play_again?
-
-      reset
-      display_play_again_message
+      until human.score == 5 || computer.score == 5
+        play_round_of_game
+      end
+    break unless play_again?
+    reset_scores
+    reset_board
     end
   end
 
@@ -165,6 +179,7 @@ class TTTGame # rubocop:disable Style/Documentation
 
   def display_welcome_message
     puts 'Welcome to Tic Tac Toe!'
+    puts "\nThe first player to win 5 games is the winner."
     puts ''
   end
 
@@ -175,6 +190,11 @@ class TTTGame # rubocop:disable Style/Documentation
   def display_board
     puts "You're a #{human.marker}. Computer is a #{computer.marker}."
     board.draw
+  end
+
+  def display_score
+    puts "Your score: #{human.score} || Computer's score: #{computer.score}"
+    puts ""
   end
 
   def clear_screen_and_display_board
@@ -219,8 +239,10 @@ class TTTGame # rubocop:disable Style/Documentation
     case board.winning_marker
     when human.marker
       puts 'You won!'
+      human.update_score
     when computer.marker
       puts 'Computer won!'
+      computer.update_score
     else
       puts "It's a tie!"
     end
@@ -248,12 +270,15 @@ class TTTGame # rubocop:disable Style/Documentation
     system 'clear'
   end
 
-  def reset
+  def reset_board
     board.reset
     @current_marker = FIRST_TO_MOVE
     clear_screen
-    puts "Let's play again!"
-    puts ''
+  end
+
+  def reset_scores
+    human.score = 0
+    computer.score = 0
   end
 end
 
