@@ -45,7 +45,16 @@ class Board # rubocop:disable Style/Documentation
       keys.join(delimeter)
     end
   end
-  
+
+  def find_at_risk_square
+    WINNING_LINES.each do |line|
+      human_marked_squares = line.select { |num| @squares[num].marker == TTTGame::HUMAN_MARKER }
+      unmarked_square = line.select { |num| @squares[num].unmarked? }
+      return unmarked_square[0] if human_marked_squares.size == 2 && unmarked_square.size == 1
+    end
+    nil
+  end  
+
   def unmarked_keys
     @squares.keys.select { |key| @squares[key].unmarked? }
   end
@@ -123,6 +132,7 @@ class Player # rubocop:disable Style/Documentation
   def update_score
     @score += 1
   end
+
 end
 
 class TTTGame # rubocop:disable Style/Documentation
@@ -230,7 +240,14 @@ class TTTGame # rubocop:disable Style/Documentation
   end
 
   def computer_moves
-    board.set_square_at(board.unmarked_keys.sample, computer.marker)
+    at_risk_square = board.find_at_risk_square
+    if at_risk_square != nil
+      board.set_square_at(at_risk_square, computer.marker)
+    elsif board.unmarked_keys.include?(5)
+      board.set_square_at(5, computer.marker)
+    else
+      board.set_square_at(board.unmarked_keys.sample, computer.marker)
+    end
   end
 
   def display_result
