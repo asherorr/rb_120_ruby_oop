@@ -53,7 +53,16 @@ class Board # rubocop:disable Style/Documentation
       return unmarked_square[0] if human_marked_squares.size == 2 && unmarked_square.size == 1
     end
     nil
-  end  
+  end
+
+  def find_winning_square
+    WINNING_LINES.each do |line|
+      human_marked_squares = line.select { |num| @squares[num].marker == TTTGame::COMPUTER_MARKER }
+      unmarked_square = line.select { |num| @squares[num].unmarked? }
+      return unmarked_square[0] if human_marked_squares.size == 2 && unmarked_square.size == 1
+    end
+    nil
+  end
 
   def unmarked_keys
     @squares.keys.select { |key| @squares[key].unmarked? }
@@ -241,7 +250,10 @@ class TTTGame # rubocop:disable Style/Documentation
 
   def computer_moves
     at_risk_square = board.find_at_risk_square
-    if at_risk_square != nil
+    winning_square = board.find_winning_square
+    if winning_square
+      board.set_square_at(winning_square, computer.marker)
+    elsif at_risk_square != nil
       board.set_square_at(at_risk_square, computer.marker)
     elsif board.unmarked_keys.include?(5)
       board.set_square_at(5, computer.marker)
