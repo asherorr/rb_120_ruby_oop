@@ -130,16 +130,29 @@ class Square # rubocop:disable Style/Documentation
 end
 
 class Player # rubocop:disable Style/Documentation
-  attr_accessor :score
+  attr_accessor :score, :name, :player_type
   attr_reader :marker
 
-  def initialize(marker, score=0)
+  def initialize(marker, player_type=:human, name="", score=0)
     @marker = marker
+    @player_type = player_type
+    @name = get_name
     @score = score
   end
 
   def update_score
     @score += 1
+  end
+
+  def get_name
+    answer = nil
+    if player_type == :human
+      puts "Enter your name:"
+      answer = gets.chomp
+    else
+      answer = ["R2D2", "Chappie", "Wall-E"].sample
+    end
+    answer
   end
 end
 
@@ -151,7 +164,7 @@ class TTTGame # rubocop:disable Style/Documentation
   def select_human_marker
     answer = ""
     loop do
-      puts "Select any marker (X, Z, A, etc)"
+      puts "Enter the marker (X, Z, A, etc) you want."
       puts "All choices are valid except for #{COMPUTER_MARKER}."
       answer = gets.chomp
       break if ["o", "O"].include?(answer) == false
@@ -201,13 +214,13 @@ class TTTGame # rubocop:disable Style/Documentation
   def initialize
     @board = Board.new
     @human_marker = select_human_marker
-    @human = Player.new(@human_marker)
-    @computer = Player.new(COMPUTER_MARKER)
+    @human = Player.new(@human_marker, :human)
+    @computer = Player.new(COMPUTER_MARKER, :computer)
     @current_marker = human.marker
   end
 
   def display_welcome_message
-    puts 'Welcome to Tic Tac Toe!'
+    puts "Welcome to Tic Tac Toe, #{human.name}!"
     puts "\nThe first player to win 5 games is the winner."
     puts ''
   end
@@ -217,12 +230,12 @@ class TTTGame # rubocop:disable Style/Documentation
   end
 
   def display_board
-    puts "You're a #{human.marker}. Computer is a #{computer.marker}."
+    puts "You're a #{human.marker}. #{computer.name} is a #{computer.marker}."
     board.draw
   end
 
   def display_score
-    puts "Your score: #{human.score} || Computer's score: #{computer.score}"
+    puts "Your score: #{human.score} || #{computer.name}'s score: #{computer.score}"
     puts ""
   end
 
