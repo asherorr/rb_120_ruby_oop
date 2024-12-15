@@ -46,9 +46,9 @@ class Board # rubocop:disable Style/Documentation
     end
   end
 
-  def find_at_risk_square
+  def find_at_risk_square(human_marker)
     WINNING_LINES.each do |line|
-      human_marked_squares = line.select { |num| @squares[num].marker == TTTGame::HUMAN_MARKER }
+      human_marked_squares = line.select { |num| @squares[num].marker == human_marker }
       unmarked_square = line.select { |num| @squares[num].unmarked? }
       return unmarked_square[0] if human_marked_squares.size == 2 && unmarked_square.size == 1
     end
@@ -77,7 +77,7 @@ class Board # rubocop:disable Style/Documentation
   end
 
   def count_human_marker(squares)
-    squares.collect(&:marker).count(TTTGame::HUMAN_MARKER)
+    squares.collect(&:marker).count(TTTGame::human.marker)
   end
 
   def count_computer_marker(squares)
@@ -141,15 +141,24 @@ class Player # rubocop:disable Style/Documentation
   def update_score
     @score += 1
   end
-
 end
 
 class TTTGame # rubocop:disable Style/Documentation
-  HUMAN_MARKER = 'X'
   COMPUTER_MARKER = 'O'
-  FIRST_TO_MOVE = HUMAN_MARKER
 
-  attr_reader :board, :human, :computer
+  attr_reader :board, :human, :computer, :human_marker
+  
+  def select_human_marker
+    answer = ""
+    loop do
+      puts "Select any marker (X, Z, A, etc)"
+      puts "All choices are valid except for #{COMPUTER_MARKER}."
+      answer = gets.chomp
+      break if ["o", "O"].include?(answer) == false
+      puts "That is not a valid option. Try again."
+    end
+    answer
+  end
 
   def player_move
     loop do
@@ -191,9 +200,10 @@ class TTTGame # rubocop:disable Style/Documentation
 
   def initialize
     @board = Board.new
-    @human = Player.new(HUMAN_MARKER)
+    @human_marker = select_human_marker
+    @human = Player.new(@human_marker)
     @computer = Player.new(COMPUTER_MARKER)
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = human.marker
   end
 
   def display_welcome_message
@@ -227,12 +237,12 @@ class TTTGame # rubocop:disable Style/Documentation
       @current_marker = COMPUTER_MARKER
     else
       computer_moves
-      @current_marker = HUMAN_MARKER
+      @current_marker = human.marker
     end
   end
 
   def human_turn?
-    @current_marker == HUMAN_MARKER
+    @current_marker == human.marker
   end
 
   def human_moves
@@ -249,7 +259,7 @@ class TTTGame # rubocop:disable Style/Documentation
   end
 
   def computer_moves
-    at_risk_square = board.find_at_risk_square
+    at_risk_square = board.find_at_risk_square(human_marker)
     winning_square = board.find_winning_square
     if winning_square
       board.set_square_at(winning_square, computer.marker)
@@ -301,7 +311,7 @@ class TTTGame # rubocop:disable Style/Documentation
 
   def reset_board
     board.reset
-    @current_marker = FIRST_TO_MOVE
+    @current_marker = human.marker
     clear_screen
   end
 
