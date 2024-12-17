@@ -1,9 +1,9 @@
-module Hand
-end
-
 class Deck
+
+  attr_reader :cards
+
   def initialize
-    @deck_of_cards = make_deck_of_cards
+    @cards = make_deck_of_cards
   end
 
   def make_deck_of_cards
@@ -12,28 +12,26 @@ class Deck
 
     ranks.product(suits).map { |rank, suit| Card.new(rank, suit) }
   end
-
-  class Card
-    attr_reader :rank, :suit
-  
-    def initialize(rank, suit)
-      @rank = rank
-      @suit = suit
-    end
-  
-    def to_s
-      "#{rank} of #{suit}"
-    end
-  end
-
-class Participant
-  # what goes in here? all the redundant behaviors from Player and Dealer?
 end
 
-class Player
+class Card
+  attr_reader :rank, :suit
+
+  def initialize(rank, suit)
+    @rank = rank
+    @suit = suit
+  end
+
+  def to_s
+    "#{rank} of #{suit}"
+  end
+end
+
+class Participant
+  attr_accessor :hand
+
   def initialize
-    # what would the "data" or "states" of a Player object entail?
-    # maybe cards? a name?
+    @hand = []
   end
 
   def hit
@@ -50,35 +48,44 @@ class Player
   end
 end
 
-class Dealer
+class Player < Participant
   def initialize
-    # seems like very similar to Player... do we even need this?
+    super
+  end
+end
+
+class Dealer < Participant
+  def initialize
+    super
   end
 
-  def deal
-    # does the dealer or the deck deal?
-  end
-
-  def hit
-  end
-
-  def stay
-  end
-
-  def busted?
-  end
-
-  def total
+  def deal_card
   end
 end
 
 class Game
+
+  attr_reader :player, :dealer, :deck
+
+  def initialize
+    @deck = Deck.new
+    @player = Player.new
+    @dealer = Dealer.new
+  end
+
   def start
-    deal_cards
+    deal_first_cards
     show_initial_cards
     player_turn
     dealer_turn
     show_result
+  end
+
+  def deal_first_cards
+    cards = deck.cards
+    cards.shuffle!
+    2.times {|_| player.hand << cards.pop }
+    2.times {|_| dealer.hand << cards.pop }
   end
 end
 
