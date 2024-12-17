@@ -46,6 +46,10 @@ class Participant
   def total
     # definitely looks like we need to know about "cards" to produce some total
   end
+
+  def show_hand
+    hand.each {|card| puts card}
+  end
 end
 
 class Player < Participant
@@ -86,6 +90,14 @@ class Game
     cards.shuffle!
     2.times {|_| player.hand << cards.pop }
     2.times {|_| dealer.hand << cards.pop }
+  end
+
+  def show_initial_cards
+    puts "The player's first two cards are:"
+    player.show_hand
+    puts "--"
+    puts "The dealer's first two cards are: "
+    dealer.show_hand
   end
 end
 
