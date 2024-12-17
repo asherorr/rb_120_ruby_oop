@@ -25,16 +25,47 @@ class Card
   def to_s
     "#{rank} of #{suit}"
   end
+
+  def is_rank_a_num?(card) # used in value_of_card method
+    true if Float(card.rank)
+  rescue StandardError
+    false
+  end
+  
+  def value_of_card
+    face_cards = ["Jack", "Queen", "King"]
+    value = 0
+  
+    if face_cards.include?(rank)
+      value += 10
+    elsif rank == "Ace" # handles updating the value of an ace
+      value += determine_ace_value
+    elsif is_rank_a_num?(rank)
+      value += rank
+    end
+  
+    value
+  end
+
+  def determine_ace_value(hand_value)
+    if (hand_value + 11) <= 21
+      11
+    else
+      1
+    end
+  end
 end
 
 class Participant
-  attr_accessor :hand
+  attr_accessor :hand, :hand_value
 
   def initialize
     @hand = []
+    @hand_value = 0
   end
 
-  def hit
+  def hit(deck)
+    hand << deck.pop
   end
 
   def stay
@@ -43,8 +74,10 @@ class Participant
   def busted?
   end
 
-  def total
-    # definitely looks like we need to know about "cards" to produce some total
+  def update_hand_value
+    hand.each do |card|
+      self.hand_value += card.value_of_card
+    end
   end
 
   def show_hand
@@ -79,6 +112,7 @@ class Game
 
   def start
     deal_first_cards
+    player.update_hand_value
     show_initial_cards
     player_turn
     dealer_turn
@@ -98,6 +132,10 @@ class Game
     puts "--"
     puts "The dealer's first two cards are: "
     dealer.show_hand
+  end
+
+  def player_turn
+    puts "\nThe value of your hand is: #{player.hand_value}"
   end
 end
 
