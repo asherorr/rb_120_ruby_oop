@@ -59,19 +59,20 @@ class Participant
   end
 
   def hit(deck)
-    hand << deck.pop
+    cards = deck.cards
+    hand << cards.pop
   end
 
   def stay
   end
 
   def busted?
+    hand_value > 21
   end
 
   def update_hand_value
     self.hand_value = 0
     hand.each do |card|
-      puts "Card value: #{card.value_of_card(hand_value)}"
       self.hand_value += card.value_of_card(hand_value)
     end
     hand_value
@@ -99,25 +100,31 @@ end
 
 class Game
 
+  attr_accessor :winner
   attr_reader :player, :dealer, :deck
 
   def initialize
     @deck = Deck.new
     @player = Player.new
     @dealer = Dealer.new
+    @winner = nil
   end
 
-  def start
-    deal_first_cards
+  def start_game
+    deal_first_cards!
     player.update_hand_value
     dealer.update_hand_value
     show_initial_cards
-    player_turn
-    # dealer_turn
-    # show_result
+    play_remainder_of_game
+    display_result
   end
 
-  def deal_first_cards
+  def play_remainder_of_game
+    player_turn
+    dealer_turn
+  end
+
+  def deal_first_cards!
     cards = deck.cards
     cards.shuffle!
     2.times {|_| player.hand << cards.pop }
@@ -133,8 +140,46 @@ class Game
   end
 
   def player_turn
-    puts "\nThe value of your hand is: #{player.hand_value}"
+    loop do
+      puts "\nYour hand value: #{player.hand_value} || Dealer's hand value: #{dealer.hand_value}"
+      answer = choose_to_hit_or_stay
+      if answer == "hit"
+        player.hit(deck)
+        player.update_hand_value
+        break if player.busted?
+      else
+        break
+      end
+    end
+  end
+
+  def dealer_turn
+    puts "\n-- Dealer's Turn --"
+    sleep 1.5
+    if dealer.hand_value < 18
+      "hit"
+    else
+      "stay"
+    end
+  end
+
+  def choose_to_hit_or_stay
+    answer = ""
+  
+    loop do
+      valid_options = ["hit", "stay"]
+      puts "Hit or stay?"
+      answer = gets.chomp.downcase
+      break if valid_options.include?(answer)
+      puts "That is not a valid option. Try again."
+    end
+  
+    answer
+  end
+
+  def display_result
+    puts "The winner is #{winner}."
   end
 end
 
-Game.new.start
+Game.new.start_game
