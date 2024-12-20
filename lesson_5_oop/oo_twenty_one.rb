@@ -121,7 +121,15 @@ class Game
 
   def play_remainder_of_game
     player_turn
-    dealer_turn
+    if player.busted?
+      self.winner = "dealer"
+    else
+      dealer_turn
+      self.winner = "player" if dealer.busted?
+    end
+  end
+
+  def determine_winner
   end
 
   def deal_first_cards!
@@ -156,10 +164,15 @@ class Game
   def dealer_turn
     puts "\n-- Dealer's Turn --"
     sleep 1.5
-    if dealer.hand_value < 18
-      "hit"
-    else
-      "stay"
+
+    loop do
+      if dealer.hand_value < 17
+        dealer.hit(deck)
+        dealer.update_hand_value
+        break if dealer.busted?
+      else
+        break
+      end
     end
   end
 
@@ -178,7 +191,11 @@ class Game
   end
 
   def display_result
-    puts "The winner is #{winner}."
+    if self.winner == nil
+      puts "It's a tie!"
+    else
+      puts "The winner is #{winner}."
+    end
   end
 end
 
