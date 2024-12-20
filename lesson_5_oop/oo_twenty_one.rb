@@ -61,6 +61,7 @@ class Participant
   def hit(deck)
     cards = deck.cards
     hand << cards.pop
+    self.update_hand_value
   end
 
   def stay
@@ -80,6 +81,10 @@ class Participant
 
   def show_hand
     hand.each {|card| puts card}
+  end
+
+  def most_recently_drawn_card
+    hand[-1]
   end
 end
 
@@ -110,11 +115,24 @@ class Game
     @winner = nil
   end
 
+  def welcome_message
+    puts "=========================================="
+    puts "||                                      ||"
+    puts "||     WELCOME TO 21: THE CARD GAME!    ||"
+    puts "||                                      ||"
+    puts "=========================================="
+    puts "Get ready to test your luck and skill!"
+    puts "Can you beat the dealer and score 21?"
+    puts ""
+    sleep (2.5)
+  end
+
+
   def start_game
+    welcome_message
     deal_first_cards!
-    player.update_hand_value
-    dealer.update_hand_value
     show_initial_cards
+    show_hand_values
     play_remainder_of_game
     display_result
   end
@@ -130,13 +148,27 @@ class Game
   end
 
   def determine_winner
+    if player.busted?
+      self.winner = "dealer"
+    elsif dealer.busted?
+      self.winner = "player"
+    elsif player.score == dealer.score
+      self.winner = nil
+    else
+      self.winner = "dealer" if dealer.score > player.score
+      self.winner = "player" if player.score > dealer.score
+    end
   end
 
   def deal_first_cards!
     cards = deck.cards
     cards.shuffle!
+
     2.times {|_| player.hand << cards.pop }
+    player.update_hand_value
+
     2.times {|_| dealer.hand << cards.pop }
+    dealer.update_hand_value
   end
 
   def show_initial_cards
@@ -147,13 +179,35 @@ class Game
     dealer.show_hand
   end
 
+  def show_hand_values
+    puts "\nYour hand value: #{player.hand_value} || Dealer's hand value: #{dealer.hand_value}"
+  end
+
+  def clear_screen
+    system 'clear'
+  end
+
+  def show_drawn_card(player)
+    puts "-- Drawing Card --"
+    sleep (1.5)
+    puts "Card drawn: #{player.most_recently_drawn_card}."
+  end
+
+  def show_new_hand(player)
+    puts "\nNew hand: "
+    puts "--"
+    player.show_hand
+    show_hand_values
+  end
+
   def player_turn
     loop do
-      puts "\nYour hand value: #{player.hand_value} || Dealer's hand value: #{dealer.hand_value}"
       answer = choose_to_hit_or_stay
+      clear_screen
       if answer == "hit"
         player.hit(deck)
-        player.update_hand_value
+        show_drawn_card(player)
+        show_new_hand(player) unless player.busted?
         break if player.busted?
       else
         break
@@ -162,13 +216,14 @@ class Game
   end
 
   def dealer_turn
+    clear_screen
     puts "\n-- Dealer's Turn --"
     sleep 1.5
 
     loop do
       if dealer.hand_value < 17
         dealer.hit(deck)
-        dealer.update_hand_value
+        show_drawn_card(dealer)
         break if dealer.busted?
       else
         break
@@ -181,7 +236,7 @@ class Game
   
     loop do
       valid_options = ["hit", "stay"]
-      puts "Hit or stay?"
+      puts "\nHit or stay?"
       answer = gets.chomp.downcase
       break if valid_options.include?(answer)
       puts "That is not a valid option. Try again."
@@ -191,10 +246,18 @@ class Game
   end
 
   def display_result
-    if self.winner == nil
+    show_hand_values
+    puts "--"
+    if player.busted?
+      puts "Because you busted, the winner is: "
+      puts "#{winner.upcase}!"
+    elsif dealer.busted?
+      puts "Because the dealer busted, the winner is: "
+      puts "#{winner.upcase}!"
+    elsif self.winner == nil
       puts "It's a tie!"
     else
-      puts "The winner is #{winner}."
+      puts "The winner is: #{winner}!"
     end
   end
 end
