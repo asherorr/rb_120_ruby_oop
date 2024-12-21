@@ -105,8 +105,7 @@ end
 
 class Game
 
-  attr_accessor :winner
-  attr_reader :player, :dealer, :deck
+  attr_accessor :winner, :deck, :player, :dealer
 
   def initialize
     @deck = Deck.new
@@ -128,19 +127,24 @@ class Game
   end
 
 
-  def start_game
+  def play_game
     welcome_message
-    deal_first_cards!
-    show_initial_cards
-    show_hand_values
-    play_remainder_of_game
-    determine_winner
-    display_result
+    loop do
+      deal_first_cards!
+      show_initial_cards
+      show_hand_values
+      play_remainder_of_game
+      determine_winner
+      display_result
+      break unless play_again?
+      reset_game
+    end
+    goodbye_message
   end
 
   def play_remainder_of_game
     player_turn
-    dealer_turn unless player.busted?
+    dealer_turn unless player.busted? || dealer.hand_value > player.hand_value
   end
 
   def determine_winner
@@ -219,7 +223,6 @@ class Game
     loop do
       if dealer.hand_value < 17
         dealer.hit(deck)
-        p dealer.show_hand
         show_drawn_card(dealer)
         break if dealer.busted?
       else
@@ -255,6 +258,42 @@ class Game
       puts "The winner is: #{winner}!"
     end
   end
+
+  def play_again?
+    answer = nil
+    loop do
+      puts 'Would you like to play again? (y/n)'
+      answer = gets.chomp.downcase
+      break if %w[y n].include? answer
+
+      puts 'Sorry, must be y or n.'
+    end
+
+    answer == 'y'
+  end
+
+  def reset_game
+    self.deck = Deck.new               # Reset the deck
+    player.hand = []                   # Clear player's hand
+    player.hand_value = 0              # Reset player's hand value
+    dealer.hand = []                   # Clear dealer's hand
+    dealer.hand_value = 0              # Reset dealer's hand value
+    self.winner = nil                  # Reset winner
+    clear_screen                       # Optional: clear the screen for the new game
+    puts "The game has been reset. Let's play again!\n\n"
+    sleep (2)
+  end
+  
+  def goodbye_message
+    clear_screen
+    puts "=========================================="
+    puts "||                                      ||"
+    puts "||      THANK YOU FOR PLAYING 21!       ||"
+    puts "||                                      ||"
+    puts "=========================================="
+    puts "Goodbye, and see you soon!"
+    puts
+  end
 end
 
-Game.new.start_game
+Game.new.play_game
