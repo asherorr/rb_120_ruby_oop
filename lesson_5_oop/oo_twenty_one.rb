@@ -134,17 +134,13 @@ class Game
     show_initial_cards
     show_hand_values
     play_remainder_of_game
+    determine_winner
     display_result
   end
 
   def play_remainder_of_game
     player_turn
-    if player.busted?
-      self.winner = "dealer"
-    else
-      dealer_turn
-      self.winner = "player" if dealer.busted?
-    end
+    dealer_turn unless player.busted?
   end
 
   def determine_winner
@@ -152,11 +148,11 @@ class Game
       self.winner = "dealer"
     elsif dealer.busted?
       self.winner = "player"
-    elsif player.score == dealer.score
+    elsif player.hand_value == dealer.hand_value
       self.winner = nil
     else
-      self.winner = "dealer" if dealer.score > player.score
-      self.winner = "player" if player.score > dealer.score
+      self.winner = "dealer" if dealer.hand_value > player.hand_value
+      self.winner = "player" if player.hand_value > dealer.hand_value
     end
   end
 
@@ -223,6 +219,7 @@ class Game
     loop do
       if dealer.hand_value < 17
         dealer.hit(deck)
+        p dealer.show_hand
         show_drawn_card(dealer)
         break if dealer.busted?
       else
@@ -249,11 +246,9 @@ class Game
     show_hand_values
     puts "--"
     if player.busted?
-      puts "Because you busted, the winner is: "
-      puts "#{winner.upcase}!"
+      puts "Because you busted, the winner is the #{winner}!"
     elsif dealer.busted?
-      puts "Because the dealer busted, the winner is: "
-      puts "#{winner.upcase}!"
+      puts "Because the dealer busted, you are the winner!"
     elsif self.winner == nil
       puts "It's a tie!"
     else
