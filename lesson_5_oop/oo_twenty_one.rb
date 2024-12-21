@@ -1,5 +1,9 @@
-class Deck
+# frozen_string_literal: true
 
+# The Deck class represents a standard deck of playing cards.
+# It initializes with a full set of cards and includes a method to
+# generate the deck and shuffle it.
+class Deck
   attr_reader :cards
 
   def initialize
@@ -7,13 +11,17 @@ class Deck
   end
 
   def make_deck_of_cards
-    ranks = ["Ace", 2, 3, 4, 5, 6, 7, 8, 9, 10, "Jack", "Queen", "King"]
-    suits = ["♠", "♣", "♥", "♦︎"]
+    ranks = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King']
+    suits = ['♠', '♣', '♥', '♦︎']
 
-    ranks.product(suits).map { |rank, suit| Card.new(rank, suit) }
+    deck = ranks.product(suits).map { |rank, suit| Card.new(rank, suit) }
+    deck.shuffle!
   end
 end
 
+# The Card class represents a single playing card with a rank and suit.
+# It includes methods for displaying the card as a string and calculating
+# its value within the context of a game.
 class Card
   attr_reader :rank, :suit
 
@@ -25,19 +33,19 @@ class Card
   def to_s
     "#{rank} of #{suit}"
   end
-  
+
   def value_of_card(hand_value)
-    face_cards = ["Jack", "Queen", "King"]
+    face_cards = %w[Jack Queen King]
     value = 0
-  
-    if face_cards.include?(rank)
-      value += 10
-    elsif rank == "Ace" # handles updating the value of an ace
-      value += determine_ace_value(hand_value)
-    else
-      value += rank
-    end
-  
+
+    value += if face_cards.include?(rank)
+               10
+             elsif rank == 'Ace' # handles updating the value of an ace
+               determine_ace_value(hand_value)
+             else
+               rank
+             end
+
     value
   end
 
@@ -50,6 +58,9 @@ class Card
   end
 end
 
+# The Participant class serves as a base class for both the Player and Dealer.
+# It manages a hand of cards and includes methods for drawing cards, checking if
+# the participant has busted, and calculating hand values.
 class Participant
   attr_accessor :hand, :hand_value
 
@@ -61,11 +72,10 @@ class Participant
   def hit(deck)
     cards = deck.cards
     hand << cards.pop
-    self.update_hand_value
+    update_hand_value
   end
 
-  def stay
-  end
+  def stay; end
 
   def busted?
     hand_value > 21
@@ -80,7 +90,7 @@ class Participant
   end
 
   def show_hand
-    hand.each {|card| puts card}
+    hand.each { |card| puts card }
   end
 
   def most_recently_drawn_card
@@ -89,22 +99,13 @@ class Participant
 end
 
 class Player < Participant
-  def initialize
-    super
-  end
 end
 
-class Dealer < Participant
-  def initialize
-    super
-  end
-
-  def deal_card
-  end
-end
-
+# The Game class orchestrates the flow of the game of 21.
+# It manages the deck, player, and dealer, and contains the logic for
+# gameplay, including dealing cards, determining the winner, and handling
+# player and dealer turns.
 class Game
-
   attr_accessor :winner
   attr_reader :player, :dealer, :deck
 
@@ -116,17 +117,16 @@ class Game
   end
 
   def welcome_message
-    puts "=========================================="
-    puts "||                                      ||"
-    puts "||     WELCOME TO 21: THE CARD GAME!    ||"
-    puts "||                                      ||"
-    puts "=========================================="
-    puts "Get ready to test your luck and skill!"
-    puts "Can you beat the dealer and score 21?"
-    puts ""
-    sleep (2.5)
+    puts '=========================================='
+    puts '||                                      ||'
+    puts '||     WELCOME TO 21: THE CARD GAME!    ||'
+    puts '||                                      ||'
+    puts '=========================================='
+    puts 'Get ready to test your luck and skill!'
+    puts 'Can you beat the dealer and score 21?'
+    puts ''
+    sleep(2.5)
   end
-
 
   def start_game
     welcome_message
@@ -144,33 +144,35 @@ class Game
   end
 
   def determine_winner
-    if player.busted?
-      self.winner = "dealer"
-    elsif dealer.busted?
-      self.winner = "player"
-    elsif player.hand_value == dealer.hand_value
-      self.winner = nil
-    else
-      self.winner = "dealer" if dealer.hand_value > player.hand_value
-      self.winner = "player" if player.hand_value > dealer.hand_value
-    end
+    self.winner = if player.busted?
+                    'dealer'
+                  elsif dealer.busted?
+                    'player'
+                  elsif player.hand_value == dealer.hand_value
+                    nil
+                  else
+                    determine_winner_by_hand_value
+                  end
+  end
+
+  def determine_winner_by_hand_value
+    dealer.hand_value > player.hand_value ? 'dealer' : 'player'
   end
 
   def deal_first_cards!
-    cards = deck.cards
-    cards.shuffle!
+    deal_cards_to(player)
+    deal_cards_to(dealer)
+  end
 
-    2.times {|_| player.hand << cards.pop }
-    player.update_hand_value
-
-    2.times {|_| dealer.hand << cards.pop }
-    dealer.update_hand_value
+  def deal_cards_to(participant)
+    2.times { participant.hand << deck.cards.pop }
+    participant.update_hand_value
   end
 
   def show_initial_cards
     puts "The player's first two cards are:"
     player.show_hand
-    puts "--"
+    puts '--'
     puts "The dealer's first two cards are: "
     dealer.show_hand
   end
@@ -184,14 +186,14 @@ class Game
   end
 
   def show_drawn_card(player)
-    puts "-- Drawing Card --"
-    sleep (1.5)
+    puts '-- Drawing Card --'
+    sleep(1.5)
     puts "Card drawn: #{player.most_recently_drawn_card}."
   end
 
   def show_new_hand(player)
     puts "\nNew hand: "
-    puts "--"
+    puts '--'
     player.show_hand
     show_hand_values
   end
@@ -200,14 +202,12 @@ class Game
     loop do
       answer = choose_to_hit_or_stay
       clear_screen
-      if answer == "hit"
-        player.hit(deck)
-        show_drawn_card(player)
-        show_new_hand(player) unless player.busted?
-        break if player.busted?
-      else
-        break
-      end
+      break unless answer == 'hit'
+
+      player.hit(deck)
+      show_drawn_card(player)
+      show_new_hand(player) unless player.busted?
+      break if player.busted?
     end
   end
 
@@ -217,39 +217,37 @@ class Game
     sleep 1.5
 
     loop do
-      if dealer.hand_value < 17
-        dealer.hit(deck)
-        p dealer.show_hand
-        show_drawn_card(dealer)
-        break if dealer.busted?
-      else
-        break
-      end
+      break unless dealer.hand_value < 17
+
+      dealer.hit(deck)
+      show_drawn_card(dealer)
+      break if dealer.busted?
     end
   end
 
   def choose_to_hit_or_stay
-    answer = ""
-  
+    answer = ''
+
     loop do
-      valid_options = ["hit", "stay"]
+      valid_options = %w[hit stay]
       puts "\nHit or stay?"
       answer = gets.chomp.downcase
       break if valid_options.include?(answer)
-      puts "That is not a valid option. Try again."
+
+      puts 'That is not a valid option. Try again.'
     end
-  
+
     answer
   end
 
   def display_result
     show_hand_values
-    puts "--"
+    puts '--'
     if player.busted?
       puts "Because you busted, the winner is the #{winner}!"
     elsif dealer.busted?
-      puts "Because the dealer busted, you are the winner!"
-    elsif self.winner == nil
+      puts 'Because the dealer busted, you are the winner!'
+    elsif winner.nil?
       puts "It's a tie!"
     else
       puts "The winner is: #{winner}!"
