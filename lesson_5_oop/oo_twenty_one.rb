@@ -1,16 +1,90 @@
 # frozen_string_literal: true
 
+module Game_Messages
+  def welcome_message(player, dealer)
+    clear_screen
+    lines = [
+      '==========================================',
+      '||                                      ||',
+      '||     WELCOME TO 21: THE CARD GAME!    ||',
+      '||                                      ||',
+      '==========================================',
+      "Get ready to test your luck and skill, #{player.name}!",
+      "Can you beat the dealer, #{dealer.name}, and score 21?",
+      '',
+      'Press Enter to continue...'
+    ]
+  
+    lines.each { |line| puts line; sleep(0.5) }
+    gets.chomp  # Wait for the player to press Enter
+    sleep(1)
+  end
+
+  def deal_initial_cards_animation(player, dealer)
+    num = 1
+    2.times do
+      clear_screen
+      puts "Dealing card #{num} to #{player.name}..."
+      sleep(1.5)
+      clear_screen
+      puts "Dealing card #{num} to #{dealer.name}..."
+      sleep(1.5)
+      num += 1
+    end
+    clear_screen
+  end
+
+  def announce_that_someone_won
+    clear_screen
+    border = "=" * 41
+    puts border
+    puts "||                                      ||"
+    puts "||         WE HAVE A WINNER!            ||"
+    puts "||                                      ||"
+    puts "||                                      ||"
+    puts border
+    sleep(3)
+  end
+
+  def flashing_draw_card_message(message = "Drawing card", duration: 3, interval: 0.5)
+    clear_screen
+    end_time = Time.now + duration
+    while Time.now < end_time
+      (1..3).each do |dots|
+        clear_screen
+        puts "#{message}#{'.' * dots}"
+        sleep(interval)
+      end
+    end
+    clear_screen
+  end
+
+  def goodbye_message(player)
+    clear_screen
+    puts '=========================================='
+    puts '||                                      ||'
+    puts '||      THANK YOU FOR PLAYING 21!       ||'
+    puts '||                                      ||'
+    puts '=========================================='
+    puts "Goodbye #{player.name}, and see you soon!"
+    puts
+  end
+end
+
 # The Deck class represents a standard deck of playing cards.
 # It initializes with a full set of cards and includes a method to
 # generate the deck and shuffle it.
 class Deck
+
   attr_reader :cards
 
+  private
+
   def initialize
-    @cards = make_deck_of_cards
+    @cards = make_deck_of_cards_and_shuffle
   end
 
-  def make_deck_of_cards
+  def make_deck_of_cards_and_shuffle
     ranks = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King']
     suits = ['♠', '♣', '♥', '♦︎']
 
@@ -25,13 +99,16 @@ end
 class Card
   attr_reader :rank, :suit
 
-  def initialize(rank, suit)
-    @rank = rank
-    @suit = suit
-  end
-
   def to_s
     "#{rank} of #{suit}"
+  end
+
+  def determine_ace_value(hand_value)
+    if (hand_value + 11) <= 21
+      11
+    else
+      1
+    end
   end
 
   def value_of_card(hand_value)
@@ -49,12 +126,11 @@ class Card
     value
   end
 
-  def determine_ace_value(hand_value)
-    if (hand_value + 11) <= 21
-      11
-    else
-      1
-    end
+  private
+
+  def initialize(rank, suit)
+    @rank = rank
+    @suit = suit
   end
 end
 
@@ -65,33 +141,11 @@ class Participant
   attr_accessor :hand, :hand_value
   attr_reader :player_type, :name
 
-  def initialize(player_type=:player)
-    @hand = []
-    @hand_value = 0
-    @player_type = player_type
-    @name = get_name
-  end
-
-  def get_name
-    return ["R2D2", "Chappie", "Wall-E"].sample if self.player_type == :computer
-  
-    loop do
-      puts "Enter your name (must include at least one letter):"
-      name = gets.chomp.strip
-      return name if name.match?(/[a-zA-Z]/)
-  
-      puts "Invalid name. It must include at least one alphabetical character. Please try again."
-    end
-  end
-  
-
   def hit(deck)
     cards = deck.cards
     hand << cards.pop
     update_hand_value
   end
-
-  def stay; end
 
   def busted?
     hand_value > 21
@@ -112,6 +166,27 @@ class Participant
   def most_recently_drawn_card
     hand[-1]
   end
+
+  private
+
+  def initialize(player_type=:player)
+    @hand = []
+    @hand_value = 0
+    @player_type = player_type
+    @name = get_name
+  end
+
+  def get_name
+    return ["R2D2", "Chappie", "Wall-E"].sample if self.player_type == :computer
+  
+    loop do
+      puts "Enter your name (must include at least one letter):"
+      name = gets.chomp.strip
+      return name if name.match?(/[a-zA-Z]/)
+  
+      puts "Invalid name. It must include at least one alphabetical character. Please try again."
+    end
+  end
 end
 
 class Player < Participant
@@ -125,51 +200,10 @@ end
 # gameplay, including dealing cards, determining the winner, and handling
 # player and dealer turns.
 class Game
-  attr_accessor :winner, :deck, :player, :dealer
+  include Game_Messages
 
-  def initialize
-    @deck = Deck.new
-    @player = Player.new
-    @dealer = Dealer.new(:computer)
-    @winner = nil
-  end
-
-  def welcome_message
-    clear_screen
-    lines = [
-      '==========================================',
-      '||                                      ||',
-      '||     WELCOME TO 21: THE CARD GAME!    ||',
-      '||                                      ||',
-      '==========================================',
-      "Get ready to test your luck and skill, #{player.name}!",
-      "Can you beat the dealer, #{dealer.name}, and score 21?",
-      '',
-      'Press Enter to continue...'
-    ]
-  
-    lines.each { |line| puts line; sleep(0.5) }
-    gets.chomp  # Wait for the player to press Enter
-    sleep(1)
-  end
-  
-
-  def deal_initial_cards_animation
-    num = 1
-    2.times do
-      clear_screen
-      puts "Dealing card #{num} to #{player.name}..."
-      sleep(1.5)
-      clear_screen
-      puts "Dealing card #{num} to #{dealer.name}..."
-      sleep(1.5)
-      num += 1
-    end
-    clear_screen
-  end
-  
   def play_game
-    welcome_message
+    welcome_message(player, dealer)
     loop do
       deal_first_cards!
       show_initial_cards
@@ -182,7 +216,18 @@ class Game
 
       reset_game
     end
-    goodbye_message
+    goodbye_message(player)
+  end
+
+  private
+
+  attr_accessor :winner, :deck, :player, :dealer
+
+  def initialize
+    @deck = Deck.new
+    @player = Player.new
+    @dealer = Dealer.new(:computer)
+    @winner = nil
   end
 
   def play_remainder_of_game
@@ -207,7 +252,7 @@ class Game
   end
 
   def deal_first_cards!
-    deal_initial_cards_animation
+    deal_initial_cards_animation(player, dealer)
     deal_first_two_cards_to(player)
     deal_first_two_cards_to(dealer)
   end
@@ -232,19 +277,6 @@ class Game
   def clear_screen
     system 'clear'
   end
-
-  def flashing_draw_card_message(message = "Drawing card", duration: 3, interval: 0.5)
-    clear_screen
-    end_time = Time.now + duration
-    while Time.now < end_time
-      (1..3).each do |dots|
-        clear_screen
-        puts "#{message}#{'.' * dots}"
-        sleep(interval)
-      end
-    end
-    clear_screen
-  end
   
   def display_drawn_card(player)
     flashing_draw_card_message
@@ -255,7 +287,17 @@ class Game
     puts "\n#{player.name}'s new hand: "
     puts '--'
     player.show_hand
-    show_hand_values
+  end
+
+  def hit_and_display_card_and_hand(player)
+    player.hit(deck)
+    display_drawn_card(player)
+    sleep(2)
+    unless player.busted?
+      show_new_hand(player) 
+      show_hand_values
+      sleep(3)
+    end
   end
 
   def player_turn
@@ -263,11 +305,8 @@ class Game
       answer = choose_to_hit_or_stay
       clear_screen
       break unless answer == 'hit'
-
-      player.hit(deck)
-      display_drawn_card(player)
-      sleep(2)
-      show_new_hand(player) unless player.busted?
+      
+      hit_and_display_card_and_hand(player)
       break if player.busted?
     end
   end
@@ -290,9 +329,8 @@ class Game
     loop do
       break if should_dealer_hit? == false
 
-      dealer.hit(deck)
-      display_drawn_card(dealer)
-      (sleep 2.5)
+      hit_and_display_card_and_hand(dealer)
+      sleep 3.5
       break if dealer.busted?
     end
   end
@@ -312,18 +350,6 @@ class Game
     answer
   end
 
-  def announce_that_someone_won
-    clear_screen
-    border = "=" * 41
-    puts border
-    puts "||                                      ||"
-    puts "||         WE HAVE A WINNER!            ||"
-    puts "||                                      ||"
-    puts "||                                      ||"
-    puts border
-    sleep(3)
-  end
-  
   def display_result
     show_hand_values
     puts '--'
@@ -363,17 +389,6 @@ class Game
     clear_screen                       # Optional: clear the screen for the new game
     puts "The game has been reset. Let's play again!\n\n"
     sleep(2.5)
-  end
-
-  def goodbye_message
-    clear_screen
-    puts '=========================================='
-    puts '||                                      ||'
-    puts '||      THANK YOU FOR PLAYING 21!       ||'
-    puts '||                                      ||'
-    puts '=========================================='
-    puts 'Goodbye, and see you soon!'
-    puts
   end
 end
 
