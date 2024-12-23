@@ -109,7 +109,6 @@ end
 # gameplay, including dealing cards, determining the winner, and handling
 # player and dealer turns.
 class Game
-
   attr_accessor :winner, :deck, :player, :dealer
 
   def initialize
@@ -120,19 +119,41 @@ class Game
   end
 
   def welcome_message
-    puts '=========================================='
-    puts '||                                      ||'
-    puts '||     WELCOME TO 21: THE CARD GAME!    ||'
-    puts '||                                      ||'
-    puts '=========================================='
-    puts 'Get ready to test your luck and skill!'
-    puts 'Can you beat the dealer and score 21?'
-    puts ''
-    sleep(2.5)
+    lines = [
+      '==========================================',
+      '||                                      ||',
+      '||     WELCOME TO 21: THE CARD GAME!    ||',
+      '||                                      ||',
+      '==========================================',
+      'Get ready to test your luck and skill!',
+      'Can you beat the dealer and score 21?',
+      '',
+      'Press Enter to continue...'
+    ]
+  
+    lines.each { |line| puts line; sleep(0.5) }
+    gets.chomp  # Wait for the player to press Enter
+    sleep(1)
   end
+  
 
+  def deal_initial_cards_animation
+    num = 1
+    2.times do
+      clear_screen
+      puts "Dealing card #{num} to the player..."
+      sleep(1.5)
+      clear_screen
+      puts "Dealing card #{num} to the dealer..."
+      sleep(1.5)
+      num += 1
+    end
+    clear_screen
+  end
+  
   def play_game
     welcome_message
+    deal_initial_cards_animation
     loop do
       deal_first_cards!
       show_initial_cards
@@ -141,6 +162,7 @@ class Game
       determine_winner
       display_result
       break unless play_again?
+
       reset_game
     end
     goodbye_message
@@ -168,11 +190,11 @@ class Game
   end
 
   def deal_first_cards!
-    deal_cards_to(player)
-    deal_cards_to(dealer)
+    deal_first_two_cards_to(player)
+    deal_first_two_cards_to(dealer)
   end
 
-  def deal_cards_to(participant)
+  def deal_first_two_cards_to(participant)
     2.times { participant.hand << deck.cards.pop }
     participant.update_hand_value
   end
@@ -193,9 +215,21 @@ class Game
     system 'clear'
   end
 
-  def show_drawn_card(player)
-    puts '-- Drawing Card --'
-    sleep(1.5)
+  def flashing_draw_card_message(message = "Drawing card", duration: 3, interval: 0.5)
+    clear_screen
+    end_time = Time.now + duration
+    while Time.now < end_time
+      (1..3).each do |dots|
+        clear_screen
+        puts "#{message}#{'.' * dots}"
+        sleep(interval)
+      end
+    end
+    clear_screen
+  end
+  
+  def display_drawn_card(player)
+    flashing_draw_card_message
     puts "Card drawn: #{player.most_recently_drawn_card}."
   end
 
@@ -213,7 +247,7 @@ class Game
       break unless answer == 'hit'
 
       player.hit(deck)
-      show_drawn_card(player)
+      display_drawn_card(player)
       show_new_hand(player) unless player.busted?
       break if player.busted?
     end
@@ -228,7 +262,7 @@ class Game
       break unless dealer.hand_value < 17
 
       dealer.hit(deck)
-      show_drawn_card(dealer)
+      display_drawn_card(dealer)
       break if dealer.busted?
     end
   end
@@ -284,17 +318,17 @@ class Game
     self.winner = nil                  # Reset winner
     clear_screen                       # Optional: clear the screen for the new game
     puts "The game has been reset. Let's play again!\n\n"
-    sleep (2)
+    sleep(2)
   end
-  
+
   def goodbye_message
     clear_screen
-    puts "=========================================="
-    puts "||                                      ||"
-    puts "||      THANK YOU FOR PLAYING 21!       ||"
-    puts "||                                      ||"
-    puts "=========================================="
-    puts "Goodbye, and see you soon!"
+    puts '=========================================='
+    puts '||                                      ||'
+    puts '||      THANK YOU FOR PLAYING 21!       ||'
+    puts '||                                      ||'
+    puts '=========================================='
+    puts 'Goodbye, and see you soon!'
     puts
   end
 end
