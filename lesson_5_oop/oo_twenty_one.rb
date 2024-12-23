@@ -63,11 +63,27 @@ end
 # the participant has busted, and calculating hand values.
 class Participant
   attr_accessor :hand, :hand_value
+  attr_reader :player_type, :name
 
-  def initialize
+  def initialize(player_type=:player)
     @hand = []
     @hand_value = 0
+    @player_type = player_type
+    @name = get_name
   end
+
+  def get_name
+    return ["R2D2", "Chappie", "Wall-E"].sample if self.player_type == :computer
+  
+    loop do
+      puts "Enter your name (must include at least one letter):"
+      name = gets.chomp.strip
+      return name if name.match?(/[a-zA-Z]/)
+  
+      puts "Invalid name. It must include at least one alphabetical character. Please try again."
+    end
+  end
+  
 
   def hit(deck)
     cards = deck.cards
@@ -114,19 +130,20 @@ class Game
   def initialize
     @deck = Deck.new
     @player = Player.new
-    @dealer = Dealer.new
+    @dealer = Dealer.new(:computer)
     @winner = nil
   end
 
   def welcome_message
+    clear_screen
     lines = [
       '==========================================',
       '||                                      ||',
       '||     WELCOME TO 21: THE CARD GAME!    ||',
       '||                                      ||',
       '==========================================',
-      'Get ready to test your luck and skill!',
-      'Can you beat the dealer and score 21?',
+      "Get ready to test your luck and skill, #{player.name}!",
+      "Can you beat the dealer, #{dealer.name}, and score 21?",
       '',
       'Press Enter to continue...'
     ]
@@ -141,10 +158,10 @@ class Game
     num = 1
     2.times do
       clear_screen
-      puts "Dealing card #{num} to the player..."
+      puts "Dealing card #{num} to #{player.name}..."
       sleep(1.5)
       clear_screen
-      puts "Dealing card #{num} to the dealer..."
+      puts "Dealing card #{num} to #{dealer.name}..."
       sleep(1.5)
       num += 1
     end
@@ -153,13 +170,13 @@ class Game
   
   def play_game
     welcome_message
-    deal_initial_cards_animation
     loop do
       deal_first_cards!
       show_initial_cards
       show_hand_values
       play_remainder_of_game
       determine_winner
+      announce_that_someone_won
       display_result
       break unless play_again?
 
@@ -170,14 +187,14 @@ class Game
 
   def play_remainder_of_game
     player_turn
-    dealer_turn unless player.busted? || dealer.hand_value > player.hand_value
+    dealer_turn unless player.busted? || dealer.hand_value > player.hand_value || dealer.hand_value == 21
   end
 
   def determine_winner
     self.winner = if player.busted?
-                    'dealer'
+                    dealer.name
                   elsif dealer.busted?
-                    'player'
+                    player.name
                   elsif player.hand_value == dealer.hand_value
                     nil
                   else
@@ -186,10 +203,11 @@ class Game
   end
 
   def determine_winner_by_hand_value
-    dealer.hand_value > player.hand_value ? 'dealer' : 'player'
+    dealer.hand_value > player.hand_value ? dealer.name : player.name
   end
 
   def deal_first_cards!
+    deal_initial_cards_animation
     deal_first_two_cards_to(player)
     deal_first_two_cards_to(dealer)
   end
@@ -200,10 +218,10 @@ class Game
   end
 
   def show_initial_cards
-    puts "The player's first two cards are:"
+    puts "#{player.name}'s first two cards are:"
     player.show_hand
     puts '--'
-    puts "The dealer's first two cards are: "
+    puts "#{dealer.name}'s first two cards are: "
     dealer.show_hand
   end
 
@@ -234,7 +252,7 @@ class Game
   end
 
   def show_new_hand(player)
-    puts "\nNew hand: "
+    puts "\n#{player.name}'s new hand: "
     puts '--'
     player.show_hand
     show_hand_values
@@ -248,21 +266,33 @@ class Game
 
       player.hit(deck)
       display_drawn_card(player)
+      sleep(2)
       show_new_hand(player) unless player.busted?
       break if player.busted?
     end
   end
 
+  def should_dealer_hit?
+    if dealer.hand_value < 17 && (player.hand_value > dealer.hand_value)
+      true
+    elsif dealer.hand_value == 21
+      false
+    elsif dealer.hand_value > 18
+      false
+    end
+  end
+
   def dealer_turn
     clear_screen
-    puts "\n-- Dealer's Turn --"
+    puts "-- #{dealer.name}'s turn --"
     sleep 1.5
 
     loop do
-      break unless dealer.hand_value < 17
+      break if should_dealer_hit? == false
 
       dealer.hit(deck)
       display_drawn_card(dealer)
+      (sleep 2.5)
       break if dealer.busted?
     end
   end
@@ -282,21 +312,35 @@ class Game
     answer
   end
 
+  def announce_that_someone_won
+    clear_screen
+    border = "=" * 41
+    puts border
+    puts "||                                      ||"
+    puts "||         WE HAVE A WINNER!            ||"
+    puts "||                                      ||"
+    puts "||                                      ||"
+    puts border
+    sleep(3)
+  end
+  
   def display_result
     show_hand_values
     puts '--'
     if player.busted?
-      puts "Because you busted, the winner is the #{winner}!"
+      puts "Because #{player.name} busted, the winner is #{winner}!"
     elsif dealer.busted?
-      puts 'Because the dealer busted, you are the winner!'
+      puts "Because #{dealer.name} busted, #{winner} is the winner!"
     elsif winner.nil?
-      puts "It's a tie!"
+      puts "The winner is nobody - it's a tie!"
     else
-      puts "The winner is: #{winner}!"
+      puts "The winner is #{winner}!"
     end
+    sleep (1.5)
   end
 
   def play_again?
+    sleep (1.5)
     answer = nil
     loop do
       puts 'Would you like to play again? (y/n)'
@@ -318,7 +362,7 @@ class Game
     self.winner = nil                  # Reset winner
     clear_screen                       # Optional: clear the screen for the new game
     puts "The game has been reset. Let's play again!\n\n"
-    sleep(2)
+    sleep(2.5)
   end
 
   def goodbye_message
