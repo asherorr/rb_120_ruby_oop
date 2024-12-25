@@ -1,9 +1,17 @@
 # frozen_string_literal: true
 
-module Game_Messages
+# The Game_Messages module displays messages
+# that appear throughout the game
+module Utility
+  def clear_screen
+    system 'clear' or system 'cls'
+  end
+end
+
+module GameMessages
   def welcome_message(player, dealer)
     clear_screen
-    lines = [
+    messages = [
       '==========================================',
       '||                                      ||',
       '||     WELCOME TO 21: THE CARD GAME!    ||',
@@ -14,39 +22,40 @@ module Game_Messages
       '',
       'Press Enter to continue...'
     ]
-  
-    lines.each { |line| puts line; sleep(0.5) }
-    gets.chomp  # Wait for the player to press Enter
-    sleep(1)
+
+    messages.each do |line|
+      puts line
+      sleep(0.4) # Slight pause for animation effect
+    end
+
+    gets.chomp
   end
 
   def deal_initial_cards_animation(player, dealer)
-    num = 1
-    2.times do
+    2.times do |num|
       clear_screen
-      puts "Dealing card #{num} to #{player.name}..."
+      puts "Dealing card #{num + 1} to #{player.name}..."
       sleep(1.5)
       clear_screen
-      puts "Dealing card #{num} to #{dealer.name}..."
+      puts "Dealing card #{num + 1} to #{dealer.name}..."
       sleep(1.5)
-      num += 1
     end
     clear_screen
   end
 
   def announce_that_someone_won
     clear_screen
-    border = "=" * 41
+    border = '=' * 41
     puts border
-    puts "||                                      ||"
-    puts "||         WE HAVE A WINNER!            ||"
-    puts "||                                      ||"
-    puts "||                                      ||"
+    puts '||                                      ||'
+    puts '||         WE HAVE A WINNER!            ||'
+    puts '||                                      ||'
+    puts '||                                      ||'
     puts border
     sleep(3)
   end
 
-  def flashing_draw_card_message(message = "Drawing card", duration: 3, interval: 0.5)
+  def flashing_draw_card_message(message = 'Drawing card', duration: 3, interval: 0.5)
     clear_screen
     end_time = Time.now + duration
     while Time.now < end_time
@@ -75,7 +84,6 @@ end
 # It initializes with a full set of cards and includes a method to
 # generate the deck and shuffle it.
 class Deck
-
   attr_reader :cards
 
   private
@@ -138,6 +146,9 @@ end
 # It manages a hand of cards and includes methods for drawing cards, checking if
 # the participant has busted, and calculating hand values.
 class Participant
+  include GameMessages
+  include Utility
+
   attr_accessor :hand, :hand_value
   attr_reader :player_type, :name
 
@@ -145,6 +156,13 @@ class Participant
     cards = deck.cards
     hand << cards.pop
     update_hand_value
+  end
+
+  def hit_and_display_card(deck)
+    self.hit(deck)
+    display_drawn_card
+    sleep(2)
+    return if self.busted?
   end
 
   def busted?
@@ -159,17 +177,27 @@ class Participant
     hand_value
   end
 
-  def show_hand
+  def show_each_card_in_hand
+    puts "#{self.name}'s hand: "
+    puts "--"
     hand.each { |card| puts card }
+    puts ""
   end
 
   def most_recently_drawn_card
     hand[-1]
   end
 
+  def display_drawn_card
+    flashing_draw_card_message
+    puts "Card drawn: #{self.most_recently_drawn_card}."
+    puts ""
+  end
+
   private
 
-  def initialize(player_type=:player)
+  def initialize(player_type = :player)
+    @deck = Deck.new
     @hand = []
     @hand_value = 0
     @player_type = player_type
@@ -177,22 +205,86 @@ class Participant
   end
 
   def get_name
-    return ["R2D2", "Chappie", "Wall-E"].sample if self.player_type == :computer
-  
+    return %w[R2D2 Chappie Wall-E].sample if player_type == :computer
+
     loop do
-      puts "Enter your name (must include at least one letter):"
+      puts 'Enter your name (must include at least one letter):'
       name = gets.chomp.strip
       return name if name.match?(/[a-zA-Z]/)
-  
-      puts "Invalid name. It must include at least one alphabetical character. Please try again."
+
+      puts 'Invalid name. It must include at least one alphabetical character. Please try again.'
     end
   end
 end
 
 class Player < Participant
+  def turn(deck, opponent)
+    loop do
+      answer = choose_to_hit_or_stay
+      clear_screen
+      break unless answer == 'hit'
+
+      hit_and_display_card(deck)
+      show_each_card_in_hand
+      puts "Your hand value: #{self.hand_value}"
+      puts "#{opponent.name}'s hand value: #{opponent.hand_value}"
+      break if self.busted?
+    end
+  end
+
+  def choose_to_hit_or_stay
+    answer = ''
+
+    loop do
+      valid_options = %w[hit stay]
+      puts "\nHit or stay?"
+      answer = gets.chomp.downcase
+      break if valid_options.include?(answer)
+
+      puts 'That is not a valid option. Try again.'
+    end
+
+    answer
+  end
 end
 
 class Dealer < Participant
+  include GameMessages
+
+  def deal_first_cards!(player, dealer, deck)
+    deal_initial_cards_animation(player, dealer)
+    deal_first_two_cards_to(player, deck)
+    deal_first_two_cards_to(dealer, deck)
+  end
+
+  def deal_first_two_cards_to(participant, deck)
+    2.times { participant.hand << deck.cards.pop }
+    participant.update_hand_value
+  end
+
+  def turn(deck)
+    clear_screen
+    puts "-- #{self.name}'s turn --"
+    sleep 1.5
+
+    loop do
+      break if should_dealer_hit? == false
+
+      hit_and_display_card(deck)
+      sleep 2.5
+      break if self.busted?
+    end
+  end
+
+  def should_dealer_hit?
+    if self.hand_value < 17
+      true
+    elsif self.hand_value == 21
+      false
+    elsif self.hand_value > 18
+      false
+    end
+  end
 end
 
 # The Game class orchestrates the flow of the game of 21.
@@ -200,15 +292,16 @@ end
 # gameplay, including dealing cards, determining the winner, and handling
 # player and dealer turns.
 class Game
-  include Game_Messages
+  include GameMessages
+  include Utility
 
   def play_game
     welcome_message(player, dealer)
     loop do
-      deal_first_cards!
-      show_initial_cards
+      dealer.deal_first_cards!(player, dealer, deck)
+      show_both_players_hands
       show_hand_values
-      play_remainder_of_game
+      play_remainder_of_game(deck)
       determine_winner
       announce_that_someone_won
       display_result
@@ -230,9 +323,19 @@ class Game
     @winner = nil
   end
 
-  def play_remainder_of_game
-    player_turn
-    dealer_turn unless player.busted? || dealer.hand_value > player.hand_value || dealer.hand_value == 21
+  def show_both_players_hands
+    player.show_each_card_in_hand
+    dealer.show_each_card_in_hand
+  end
+
+  def show_hand_values
+    puts "\n#{player.name}'s hand value: #{player.hand_value} || #{dealer.name}'s hand value: #{dealer.hand_value}"
+  end
+
+
+  def play_remainder_of_game(deck)
+    player.turn(deck, dealer)
+    dealer.turn(deck) unless player.busted? || dealer.hand_value > player.hand_value || dealer.hand_value == 21
   end
 
   def determine_winner
@@ -251,105 +354,6 @@ class Game
     dealer.hand_value > player.hand_value ? dealer.name : player.name
   end
 
-  def deal_first_cards!
-    deal_initial_cards_animation(player, dealer)
-    deal_first_two_cards_to(player)
-    deal_first_two_cards_to(dealer)
-  end
-
-  def deal_first_two_cards_to(participant)
-    2.times { participant.hand << deck.cards.pop }
-    participant.update_hand_value
-  end
-
-  def show_initial_cards
-    puts "#{player.name}'s first two cards are:"
-    player.show_hand
-    puts '--'
-    puts "#{dealer.name}'s first two cards are: "
-    dealer.show_hand
-  end
-
-  def show_hand_values
-    puts "\nYour hand value: #{player.hand_value} || Dealer's hand value: #{dealer.hand_value}"
-  end
-
-  def clear_screen
-    system 'clear'
-  end
-  
-  def display_drawn_card(player)
-    flashing_draw_card_message
-    puts "Card drawn: #{player.most_recently_drawn_card}."
-  end
-
-  def show_new_hand(player)
-    puts "\n#{player.name}'s new hand: "
-    puts '--'
-    player.show_hand
-  end
-
-  def hit_and_display_card_and_hand(player)
-    player.hit(deck)
-    display_drawn_card(player)
-    sleep(2)
-    unless player.busted?
-      show_new_hand(player) 
-      show_hand_values
-      sleep(3)
-    end
-  end
-
-  def player_turn
-    loop do
-      answer = choose_to_hit_or_stay
-      clear_screen
-      break unless answer == 'hit'
-      
-      hit_and_display_card_and_hand(player)
-      break if player.busted?
-    end
-  end
-
-  def should_dealer_hit?
-    if dealer.hand_value < 17 && (player.hand_value > dealer.hand_value)
-      true
-    elsif dealer.hand_value == 21
-      false
-    elsif dealer.hand_value > 18
-      false
-    end
-  end
-
-  def dealer_turn
-    clear_screen
-    puts "-- #{dealer.name}'s turn --"
-    sleep 1.5
-
-    loop do
-      break if should_dealer_hit? == false
-
-      hit_and_display_card_and_hand(dealer)
-      sleep 3.5
-      break if dealer.busted?
-    end
-  end
-
-  def choose_to_hit_or_stay
-    answer = ''
-
-    loop do
-      valid_options = %w[hit stay]
-      puts "\nHit or stay?"
-      answer = gets.chomp.downcase
-      break if valid_options.include?(answer)
-
-      puts 'That is not a valid option. Try again.'
-    end
-
-    answer
-  end
-
   def display_result
     show_hand_values
     puts '--'
@@ -362,11 +366,11 @@ class Game
     else
       puts "The winner is #{winner}!"
     end
-    sleep (1.5)
+    sleep(1.5)
   end
 
   def play_again?
-    sleep (1.5)
+    sleep(1.5)
     answer = nil
     loop do
       puts 'Would you like to play again? (y/n)'
