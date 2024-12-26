@@ -80,12 +80,12 @@ module GameMessages
       '==========================================',
       "Goodbye #{player.name}, and see you soon!"
     ]
-    
+
     animation_lines.each do |line|
       puts line
       sleep(0.5)
     end
-    puts ""
+    puts ''
   end
 end
 
