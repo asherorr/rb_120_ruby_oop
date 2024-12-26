@@ -1,13 +1,15 @@
 # frozen_string_literal: true
 
-# The Game_Messages module displays messages
-# that appear throughout the game
+# The Utilty module contains a method to clear the screen
 module Utility
   def clear_screen
     system 'clear' or system 'cls'
   end
 end
 
+# The GameMessages module contains methods for displaying messages and animations
+# during the game. These include welcome and goodbye messages, card dealing animations,
+# winner announcements, and dynamic prompts to enhance the user experience.
 module GameMessages
   def welcome_message(player, dealer)
     clear_screen
@@ -45,7 +47,7 @@ module GameMessages
 
   def announce_that_someone_won
     clear_screen
-    border = '=' * 41
+    border = '=' * 42
     puts border
     puts '||                                      ||'
     puts '||         WE HAVE A WINNER!            ||'
@@ -70,19 +72,26 @@ module GameMessages
 
   def goodbye_message(player)
     clear_screen
-    puts '=========================================='
-    puts '||                                      ||'
-    puts '||      THANK YOU FOR PLAYING 21!       ||'
-    puts '||                                      ||'
-    puts '=========================================='
-    puts "Goodbye #{player.name}, and see you soon!"
-    puts
+    animation_lines = [
+      '==========================================',
+      '||                                      ||',
+      '||      THANK YOU FOR PLAYING 21!       ||',
+      '||                                      ||',
+      '==========================================',
+      "Goodbye #{player.name}, and see you soon!"
+    ]
+    
+    animation_lines.each do |line|
+      puts line
+      sleep(0.5)
+    end
+    puts ""
   end
 end
 
-# The Deck class represents a standard deck of playing cards.
-# It initializes with a full set of cards and includes a method to
-# generate the deck and shuffle it.
+# The Deck class represents a deck of playing cards.
+# It initializes with a shuffled standard 52-card deck.
+# This class encapsulates the logic for creating and shuffling the deck.
 class Deck
   attr_reader :cards
 
@@ -101,9 +110,9 @@ class Deck
   end
 end
 
-# The Card class represents a single playing card with a rank and suit.
-# It includes methods for displaying the card as a string and calculating
-# its value within the context of a game.
+# The Card class represents an individual playing card with a rank and suit.
+# It provides methods to display the card and calculate its value in a game of 21,
+# including dynamic handling of Ace values based on the current hand value.
 class Card
   attr_reader :rank, :suit
 
@@ -142,9 +151,9 @@ class Card
   end
 end
 
-# The Participant class serves as a base class for both the Player and Dealer.
-# It manages a hand of cards and includes methods for drawing cards, checking if
-# the participant has busted, and calculating hand values.
+# The Participant class is a base class for both the Player and Dealer.
+# It manages a hand of cards, calculates hand values, determines if the participant has busted,
+# and includes common behaviors like hitting and displaying cards.
 class Participant
   include GameMessages
   include Utility
@@ -159,10 +168,10 @@ class Participant
   end
 
   def hit_and_display_card(deck)
-    self.hit(deck)
+    hit(deck)
     display_drawn_card
-    sleep(2)
-    return if self.busted?
+    sleep(1.5)
+    return if busted?
   end
 
   def busted?
@@ -178,10 +187,10 @@ class Participant
   end
 
   def show_each_card_in_hand
-    puts "#{self.name}'s hand: "
-    puts "--"
+    puts "#{name}'s hand: "
+    puts '--'
     hand.each { |card| puts card }
-    puts ""
+    puts ''
   end
 
   def most_recently_drawn_card
@@ -190,8 +199,8 @@ class Participant
 
   def display_drawn_card
     flashing_draw_card_message
-    puts "Card drawn: #{self.most_recently_drawn_card}."
-    puts ""
+    puts "Card drawn: #{most_recently_drawn_card}."
+    puts ''
   end
 
   private
@@ -201,10 +210,10 @@ class Participant
     @hand = []
     @hand_value = 0
     @player_type = player_type
-    @name = get_name
+    @name = assign_name
   end
 
-  def get_name
+  def assign_name
     return %w[R2D2 Chappie Wall-E].sample if player_type == :computer
 
     loop do
@@ -217,6 +226,9 @@ class Participant
   end
 end
 
+# The Player class inherits from Participant and represents the human player.
+# It provides methods for the player's turn, including the option to hit or stay,
+# and displays the current state of their hand and its value.
 class Player < Participant
   def turn(deck, opponent)
     loop do
@@ -228,7 +240,7 @@ class Player < Participant
       show_each_card_in_hand
       puts "Your hand value: #{self.hand_value}"
       puts "#{opponent.name}'s hand value: #{opponent.hand_value}"
-      break if self.busted?
+      break if busted?
     end
   end
 
@@ -248,6 +260,10 @@ class Player < Participant
   end
 end
 
+# The Dealer class inherits from Participant and represents the computer dealer.
+# It includes logic specific to the dealer's actions, such as deciding when to hit
+# and dealing the initial cards to both players. The dealer follows specific rules
+# for gameplay, such as always hitting on a hand value less than 17.
 class Dealer < Participant
   include GameMessages
 
@@ -264,7 +280,7 @@ class Dealer < Participant
 
   def turn(deck)
     clear_screen
-    puts "-- #{self.name}'s turn --"
+    puts "-- #{name}'s turn --"
     sleep 1.5
 
     loop do
@@ -272,7 +288,7 @@ class Dealer < Participant
 
       hit_and_display_card(deck)
       sleep 2.5
-      break if self.busted?
+      break if busted?
     end
   end
 
@@ -287,24 +303,17 @@ class Dealer < Participant
   end
 end
 
-# The Game class orchestrates the flow of the game of 21.
-# It manages the deck, player, and dealer, and contains the logic for
-# gameplay, including dealing cards, determining the winner, and handling
-# player and dealer turns.
+# The Game class orchestrates the overall flow of the game of 21.
+# It handles the setup of players and the deck, the turn-based gameplay, determining the winner,
+# and prompting the user to play again or exit. This class is the main entry point for the game.
 class Game
   include GameMessages
   include Utility
 
-  def play_game
+  def start_game
     welcome_message(player, dealer)
     loop do
-      dealer.deal_first_cards!(player, dealer, deck)
-      show_both_players_hands
-      show_hand_values
-      play_remainder_of_game(deck)
-      determine_winner
-      announce_that_someone_won
-      display_result
+      play_round_of_game
       break unless play_again?
 
       reset_game
@@ -323,17 +332,26 @@ class Game
     @winner = nil
   end
 
+  def play_round_of_game
+    dealer.deal_first_cards!(player, dealer, deck)
+    show_both_players_hands
+    show_hand_values
+    execute_player_and_dealer_turn(deck)
+    determine_winner
+    announce_that_someone_won
+    display_result
+  end
+
   def show_both_players_hands
     player.show_each_card_in_hand
     dealer.show_each_card_in_hand
   end
 
   def show_hand_values
-    puts "\n#{player.name}'s hand value: #{player.hand_value} || #{dealer.name}'s hand value: #{dealer.hand_value}"
+    puts "#{player.name}'s hand value: #{player.hand_value} || #{dealer.name}'s hand value: #{dealer.hand_value}"
   end
 
-
-  def play_remainder_of_game(deck)
+  def execute_player_and_dealer_turn(deck)
     player.turn(deck, dealer)
     dealer.turn(deck) unless player.busted? || dealer.hand_value > player.hand_value || dealer.hand_value == 21
   end
@@ -354,19 +372,22 @@ class Game
     dealer.hand_value > player.hand_value ? dealer.name : player.name
   end
 
+  def result_message
+    if player.busted?
+      "Because #{player.name} busted, the winner is #{winner}!"
+    elsif dealer.busted?
+      "Because #{dealer.name} busted, #{winner} is the winner!"
+    elsif winner.nil?
+      "The winner is nobody - it's a tie!"
+    else
+      "The winner is #{winner}!"
+    end
+  end
+
   def display_result
     show_hand_values
     puts '--'
-    if player.busted?
-      puts "Because #{player.name} busted, the winner is #{winner}!"
-    elsif dealer.busted?
-      puts "Because #{dealer.name} busted, #{winner} is the winner!"
-    elsif winner.nil?
-      puts "The winner is nobody - it's a tie!"
-    else
-      puts "The winner is #{winner}!"
-    end
-    sleep(1.5)
+    puts result_message
   end
 
   def play_again?
@@ -396,4 +417,4 @@ class Game
   end
 end
 
-Game.new.play_game
+Game.new.start_game
