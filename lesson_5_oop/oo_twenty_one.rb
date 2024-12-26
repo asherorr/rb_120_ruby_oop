@@ -388,7 +388,7 @@ class Game
   end
 
   def play_again?
-    sleep(1.5)
+    sleep(2.5)
     answer = nil
     loop do
       puts 'Would you like to play again? (y/n)'
