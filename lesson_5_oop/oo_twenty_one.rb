@@ -11,6 +11,13 @@ end
 # during the game. These include welcome and goodbye messages, card dealing animations,
 # winner announcements, and dynamic prompts to enhance the user experience.
 module GameMessages
+  def animate(lines, delay: 0.5)
+    lines.each do |line|
+      puts line
+      sleep(delay)
+    end
+  end
+
   def welcome_message(player, dealer)
     clear_screen
     messages = [
@@ -24,12 +31,7 @@ module GameMessages
       '',
       'Press Enter to continue...'
     ]
-
-    messages.each do |line|
-      puts line
-      sleep(0.4) # Slight pause for animation effect
-    end
-
+    animate(messages, delay: 0.4)
     gets.chomp
   end
 
@@ -80,12 +82,7 @@ module GameMessages
       '==========================================',
       "Goodbye #{player.name}, and see you soon!"
     ]
-
-    animation_lines.each do |line|
-      puts line
-      sleep(0.5)
-    end
-    puts ''
+    animate(animation_lines)
   end
 end
 
