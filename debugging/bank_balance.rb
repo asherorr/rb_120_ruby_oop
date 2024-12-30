@@ -62,14 +62,17 @@
 
 #--#
 
-#In the first version of the code, the `BankAccount#withdraw` method contained a logical errror.
-#The `success` variable was always returning true, because it was only checking if the 
-#operation `self.balance -= amount` returned true, which it would even if the amount
-#withdrawn was greater than the balance.
+#In the first version of the code, the `success` variable points to a Ruby setter method, which always
+#returns the argument passed in (a truthy value), even if an explicit return statement exists within the method body.
 
-#I refactored this method to return true on line 92 only if the balance, minus the amount withdrawn
-#is greater than 0.
-#The code now works as expected.
+#For this reason, `success` on line 25 always evaluates to true. 
+
+#However, when the `balance=` method is invoked on line 25, the argument passed in, `new_balance`, which in this case is -30, 
+#will cause the `valid_transaction?` method in `balance=` to return false, which bypasses the reassignment of the @balance instance variable
+#on line 39.
+
+#I changed the code to check the validity of the transaction by calling `valiid_transaction?`
+#in `withdraw` instead of `balance=`. This way, we don't attempt to use the setter for its return value, which results in a buggy program.
 
 class BankAccount
   attr_reader :balance
@@ -90,10 +93,11 @@ class BankAccount
   end
 
   def withdraw(amount)
-    if amount > 0
-      success = ((self.balance -= amount) > 0)
+    if amount > 0 && valid_transaction?(balance - amount)
+      self.balance -= amount
+      "$#{amount} withdrawn. Total balance is $#{balance}."
     else
-      success = false
+      "Invalid. Enter positive amount less than or equal to current balance ($#{balance})."
     end
 
     if success
@@ -104,12 +108,7 @@ class BankAccount
   end
 
   def balance=(new_balance)
-    if valid_transaction?(new_balance)
-      @balance = new_balance
-      true
-    else
-      false
-    end
+    @balance = new_balance
   end
 
   def valid_transaction?(new_balance)
