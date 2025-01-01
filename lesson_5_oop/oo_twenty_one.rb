@@ -290,13 +290,7 @@ class Dealer < Participant
   end
 
   def should_dealer_hit?
-    if self.hand_value < 17
-      true
-    elsif self.hand_value == 21
-      false
-    elsif self.hand_value > 18
-      false
-    end
+    self.hand_value < 17
   end
 end
 
