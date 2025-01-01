@@ -127,17 +127,14 @@ class Card
 
   def value_of_card(hand_value)
     face_cards = %w[Jack Queen King]
-    value = 0
 
-    value += if face_cards.include?(rank)
-               10
-             elsif rank == 'Ace' # handles updating the value of an ace
-               determine_ace_value(hand_value)
-             else
-               rank
-             end
-
-    value
+    if face_cards.include?(rank)
+      10
+    elsif rank == 'Ace' # handles updating the value of an ace
+      determine_ace_value(hand_value)
+    else
+      rank
+    end
   end
 
   private
