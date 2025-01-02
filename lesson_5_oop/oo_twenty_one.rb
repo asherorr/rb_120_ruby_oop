@@ -151,7 +151,7 @@ class Participant
   include WinningScore
 
   attr_accessor :hand
-  attr_reader :player_type, :name
+  attr_reader :name
 
   def hit(deck)
     cards = deck.cards
@@ -213,15 +213,14 @@ class Participant
 
   private
 
-  def initialize(player_type = :player)
+  def initialize
     @deck = Deck.new
     @hand = []
-    @player_type = player_type
     @name = assign_name
   end
 
   def assign_name
-    return %w[R2D2 Chappie Wall-E].sample if player_type == :computer
+    return %w[R2D2 Chappie Wall-E].sample if self.class == Dealer
 
     loop do
       puts 'Enter your name (must include at least one letter):'
@@ -330,7 +329,7 @@ class Game
   def initialize
     @deck = Deck.new
     @player = Player.new
-    @dealer = Dealer.new(:computer)
+    @dealer = Dealer.new
     @winner = nil
   end
 
