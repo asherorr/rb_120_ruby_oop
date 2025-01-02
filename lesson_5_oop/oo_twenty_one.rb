@@ -7,13 +7,15 @@ module Utility
   end
 end
 
+# The WinningScore module contains a variable that references the winning score
 module WinningScore
   TARGET_SCORE = 21
 end
 
 # The GameMessages module contains methods for displaying messages and animations
-# during the game. These include welcom e and goodbye messages, card dealing animations,
-# winner announcements, and dynamic prompts to enhance the user experience.
+# during the game, and are used specifically within the Game class.
+# These include welcome and goodbye messages, winner announcements, 
+# and dynamic prompts to enhance the user experience.
 module GameMessages
   def animate(lines, delay: 0.5)
     lines.each do |line|
@@ -39,18 +41,6 @@ module GameMessages
     gets.chomp
   end
 
-  def deal_initial_cards_animation(player, dealer)
-    2.times do |num|
-      clear_screen
-      puts "Dealing card #{num + 1} to #{player.name}..."
-      sleep(1.5)
-      clear_screen
-      puts "Dealing card #{num + 1} to #{dealer.name}..."
-      sleep(1.5)
-    end
-    clear_screen
-  end
-
   def announce_that_someone_won
     clear_screen
     border = '=' * 42
@@ -61,19 +51,6 @@ module GameMessages
     puts '||                                      ||'
     puts border
     sleep(3)
-  end
-
-  def flashing_draw_card_message(message = 'Drawing card', duration: 3, interval: 0.5)
-    clear_screen
-    end_time = Time.now + duration
-    while Time.now < end_time
-      (1..3).each do |dots|
-        clear_screen
-        puts "#{message}#{'.' * dots}"
-        sleep(interval)
-      end
-    end
-    clear_screen
   end
 
   def goodbye_message(player)
@@ -87,6 +64,20 @@ module GameMessages
       "Goodbye #{player.name}, and see you soon!"
     ]
     animate(animation_lines)
+  end
+end
+
+module DealerMessage
+  def deal_initial_cards_animation(player, dealer)
+    2.times do |num|
+      clear_screen
+      puts "Dealing card #{num + 1} to #{player.name}..."
+      sleep(1.5)
+      clear_screen
+      puts "Dealing card #{num + 1} to #{dealer.name}..."
+      sleep(1.5)
+    end
+    clear_screen
   end
 end
 
@@ -198,6 +189,19 @@ class Participant
     hand[-1]
   end
 
+  def flashing_draw_card_message(message = 'Drawing card', duration: 3, interval: 0.5)
+    clear_screen
+    end_time = Time.now + duration
+    while Time.now < end_time
+      (1..3).each do |dots|
+        clear_screen
+        puts "#{message}#{'.' * dots}"
+        sleep(interval)
+      end
+    end
+    clear_screen
+  end
+
   def display_drawn_card
     flashing_draw_card_message
     puts "Card drawn: #{most_recently_drawn_card}."
@@ -267,6 +271,7 @@ end
 # for gameplay, such as always hitting on a hand value less than 17.
 class Dealer < Participant
   include GameMessages
+  include DealerMessage
 
   def deal_first_cards!(player, dealer, deck)
     deal_initial_cards_animation(player, dealer)
