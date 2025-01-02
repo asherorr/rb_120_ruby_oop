@@ -150,13 +150,12 @@ class Participant
   include Utility
   include WinningScore
 
-  attr_accessor :hand, :hand_value
+  attr_accessor :hand
   attr_reader :player_type, :name
 
   def hit(deck)
     cards = deck.cards
     hand << cards.pop
-    update_hand_value
   end
 
   def hit_and_display_card(deck)
@@ -170,13 +169,17 @@ class Participant
     hand_value > TARGET_SCORE
   end
 
-  def update_hand_value
-    self.hand_value = 0
+  def hand_value
+    total_value = 0
+  
+    # Calculate the total value of the hand using the card's value method
     hand.each do |card|
-      self.hand_value += card.value(hand_value)
+      total_value += card.value(total_value)
     end
-    hand_value
+  
+    total_value
   end
+  
 
   def show_each_card_in_hand
     puts "#{name}'s hand: "
@@ -213,7 +216,6 @@ class Participant
   def initialize(player_type = :player)
     @deck = Deck.new
     @hand = []
-    @hand_value = 0
     @player_type = player_type
     @name = assign_name
   end
@@ -243,7 +245,7 @@ class Player < Participant
 
       hit_and_display_card(deck)
       show_each_card_in_hand
-      puts "Your hand value: #{self.hand_value}"
+      puts "Your hand value: #{hand_value}"
       puts "#{opponent.name}'s hand value: #{opponent.hand_value}"
       break if busted?
     end
@@ -281,7 +283,6 @@ class Dealer < Participant
 
   def deal_first_two_cards_to(participant, deck)
     2.times { participant.hand << deck.cards.pop }
-    participant.update_hand_value
   end
 
   def turn(deck)
@@ -299,7 +300,7 @@ class Dealer < Participant
   end
 
   def should_dealer_hit?
-    self.hand_value < 17
+    hand_value < 17
   end
 end
 
@@ -408,9 +409,7 @@ class Game
   def reset_game
     self.deck = Deck.new               # Reset the deck
     player.hand = []                   # Clear player's hand
-    player.hand_value = 0              # Reset player's hand value
     dealer.hand = []                   # Clear dealer's hand
-    dealer.hand_value = 0              # Reset dealer's hand value
     self.winner = nil                  # Reset winner
     clear_screen                       # Optional: clear the screen for the new game
     puts "The game has been reset. Let's play again!\n\n"
