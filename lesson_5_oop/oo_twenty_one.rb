@@ -7,8 +7,12 @@ module Utility
   end
 end
 
+module WinningScore
+  TARGET_SCORE = 21
+end
+
 # The GameMessages module contains methods for displaying messages and animations
-# during the game. These include welcome and goodbye messages, card dealing animations,
+# during the game. These include welcom e and goodbye messages, card dealing animations,
 # winner announcements, and dynamic prompts to enhance the user experience.
 module GameMessages
   def animate(lines, delay: 0.5)
@@ -90,19 +94,19 @@ end
 # It initializes with a shuffled standard 52-card deck.
 # This class encapsulates the logic for creating and shuffling the deck.
 class Deck
+  RANKS = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King'].freeze
   attr_reader :cards
 
   private
 
   def initialize
-    @cards = make_deck_of_cards_and_shuffle
+    @cards = make_deck
   end
 
-  def make_deck_of_cards_and_shuffle
-    ranks = ['Ace', 2, 3, 4, 5, 6, 7, 8, 9, 10, 'Jack', 'Queen', 'King']
+  def make_deck
     suits = ['♠', '♣', '♥', '♦︎']
 
-    deck = ranks.product(suits).map { |rank, suit| Card.new(rank, suit) }
+    deck = RANKS.product(suits).map { |rank, suit| Card.new(rank, suit) }
     deck.shuffle!
   end
 end
@@ -111,6 +115,8 @@ end
 # It provides methods to display the card and calculate its value in a game of 21,
 # including dynamic handling of Ace values based on the current hand value.
 class Card
+  include WinningScore
+
   attr_reader :rank, :suit
 
   def to_s
@@ -118,14 +124,14 @@ class Card
   end
 
   def determine_ace_value(hand_value)
-    if (hand_value + 11) <= 21
+    if (hand_value + 11) <= TARGET_SCORE
       11
     else
       1
     end
   end
 
-  def value_of_card(hand_value)
+  def value(hand_value)
     face_cards = %w[Jack Queen King]
 
     if face_cards.include?(rank)
@@ -151,6 +157,7 @@ end
 class Participant
   include GameMessages
   include Utility
+  include WinningScore
 
   attr_accessor :hand, :hand_value
   attr_reader :player_type, :name
@@ -169,13 +176,13 @@ class Participant
   end
 
   def busted?
-    hand_value > 21
+    hand_value > TARGET_SCORE
   end
 
   def update_hand_value
     self.hand_value = 0
     hand.each do |card|
-      self.hand_value += card.value_of_card(hand_value)
+      self.hand_value += card.value(hand_value)
     end
     hand_value
   end
@@ -297,6 +304,7 @@ end
 class Game
   include GameMessages
   include Utility
+  include WinningScore
 
   def start_game
     welcome_message(player, dealer)
@@ -341,7 +349,7 @@ class Game
 
   def execute_player_and_dealer_turn(deck)
     player.turn(deck, dealer)
-    dealer.turn(deck) unless player.busted? || dealer.hand_value > player.hand_value || dealer.hand_value == 21
+    dealer.turn(deck) unless player.busted? || dealer.hand_value > player.hand_value || dealer.hand_value == TARGET_SCORE
   end
 
   def determine_winner
